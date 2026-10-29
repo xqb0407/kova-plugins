@@ -1,0 +1,10 @@
+{
+  "name": "demo-panel",
+  "version": "0.1.0",
+  "description": "最小面板型插件示例：编辑工作区里的 *.note.json 快速笔记，演示 kova-ui-plugin/1 桥协议的握手、文档读写、提示与 agent 预填。单文件 HTML（无构建、无依赖），可直接作为新面板插件的起点",
+  "author": { "name": "Kova" },
+  "category": "示例",
+  "icon": "icon.svg",
+  "keywords": ["demo", "panel", "note", "笔记"],
+  "panels": "panels.json"
+}

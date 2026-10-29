@@ -1,0 +1,10 @@
+[
+  {
+    "id": "demo-panel",
+    "title": "快速笔记",
+    "icon": "icon.svg",
+    "entry": "demo-panel.html",
+    "opens": ["*.note.json"],
+    "permissions": ["document", "agent", "notify"]
+  }
+]

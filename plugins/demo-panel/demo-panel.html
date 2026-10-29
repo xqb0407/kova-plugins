@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>快速笔记</title>
+    <!--
+      最小面板插件（kova-ui-plugin/1）。
+      宿主把本文件以 blob: URL 挂进 sandbox="allow-scripts" 的 iframe（不透明源）：
+      所有 CSS/JS 必须内联，不能引用相对路径资源，localStorage 会抛异常（已 try/catch）。
+      协议：post({kind, ...}) → 宿主；宿主回 {v, dir:"host", kind, ...}。
+      直开浏览器时内置 mock 宿主，编辑照常、只落本机 localStorage，方便调样式。
+    -->
+    <style>
+      :root {
+        --bg: #ffffff;
+        --bg-soft: #f6f7f9;
+        --border: #e2e5ea;
+        --text: #1f2430;
+        --muted: #6b7280;
+        --accent: #0284c7;
+        --danger: #dc2626;
+        color-scheme: light;
+      }
+      html[data-theme="dark"] {
+        --bg: #14171c;
+        --bg-soft: #1b1f26;
+        --border: #2b313b;
+        --text: #e6e9ef;
+        --muted: #9aa4b2;
+        --accent: #38bdf8;
+        --danger: #f87171;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font: 13px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      header {
+        flex: none;
+        padding: 10px 14px 8px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-soft);
+      }
+      .row { display: flex; align-items: center; gap: 8px; }
+      .grow { flex: 1; min-width: 0; }
+      h1 { font-size: 13px; font-weight: 600; margin: 0; }
+      .meta {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pill {
+        flex: none;
+        padding: 1px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 11px;
+        color: var(--muted);
+        background: var(--bg);
+      }
+      .pill.dirty { color: var(--accent); border-color: var(--accent); }
+      main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 14px; gap: 10px; }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field.grow { flex: 1; min-height: 0; }
+      .field > span { font-size: 11px; color: var(--muted); }
+      input, textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+        outline: none;
+      }
+      input:focus, textarea:focus { border-color: var(--accent); }
+      input:disabled, textarea:disabled { background: var(--bg-soft); color: var(--muted); }
+      textarea { flex: 1; min-height: 120px; resize: none; }
+      footer {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        background: var(--bg-soft);
+      }
+      button {
+        padding: 5px 12px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+      button:disabled { opacity: .5; cursor: default; }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.08); }
+      .hint {
+        flex: 1;
+        min-width: 0;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .hint.error { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="row">
+        <h1>快速笔记</h1>
+        <span id="status" class="pill">未连接</span>
+      </div>
+      <div id="meta" class="meta">等待宿主握手…</div>
+    </header>
+
+    <main>
+      <label class="field">
+        <span>标题</span>
+        <input id="title" type="text" placeholder="笔记标题" disabled />
+      </label>
+      <label class="field grow">
+        <span>正文</span>
+        <textarea id="body" placeholder="写点什么…" disabled></textarea>
+      </label>
+    </main>
+
+    <footer>
+      <button id="create" class="primary" disabled>新建笔记</button>
+      <button id="ask" disabled>让 agent 总结</button>
+      <span id="hint" class="hint"></span>
+    </footer>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const PROTOCOL = "kova-ui-plugin/1";
+        const DOC_VERSION = 1;
+        const inHost = window.parent !== window;
+
+        const $ = (id) => document.getElementById(id);
+        const ui = {
+          status: $("status"),
+          meta: $("meta"),
+          title: $("title"),
+          body: $("body"),
+          create: $("create"),
+          ask: $("ask"),
+          hint: $("hint"),
+        };
+
+        let docPath = null;
+        let docData = { version: DOC_VERSION, title: "", body: "" };
+        /** 应用宿主推送内容期间不把 input 事件回传，避免回环 */
+        let applying = false;
+        let saveTimer = null;
+        let workspace = "";
+
+        /* ---------------- 出站：UI → 宿主 ---------------- */
+
+        function post(msg) {
+          if (!inHost) {
+            queueMicrotask(() => mockHost(msg));
+            return;
+          }
+          window.parent.postMessage({ v: PROTOCOL, dir: "ui", ...msg }, "*");
+        }
+
+        /* ---------------- 入站：宿主 → UI ---------------- */
+
+        function handle(msg) {
+          switch (msg.kind) {
+            case "handshake": {
+              setTheme(msg.theme);
+              workspace = msg.context?.workspaceName ?? "";
+              setStatus("已连接");
+              if (msg.context?.fileRelPath) post({ kind: "doc.request" });
+              else enterUnbound();
+              return;
+            }
+            case "doc.open": {
+              // external=true 表示盘上内容来自 agent/外部编辑器；真实插件可在此做冲突提示
+              applyDoc(msg.json, msg.path ?? docPath);
+              return;
+            }
+            case "doc.saved": {
+              setStatus("已保存", false);
+              return;
+            }
+            case "doc.error": {
+              // 保留宿主给的原文（如「文件已存在，未覆盖」），只把状态拉回未绑定
+              showHint(msg.errorText, true);
+              if (!docPath) setStatus("未绑定", false);
+              return;
+            }
+            case "theme.update": {
+              setTheme(msg.theme);
+              return;
+            }
+          }
+        }
+
+        if (inHost) {
+          window.addEventListener("message", (ev) => {
+            const d = ev.data;
+            if (!d || typeof d !== "object" || d.v !== PROTOCOL || d.dir !== "host") return;
+            handle(d);
+          });
+          post({ kind: "ui.ready" });
+        } else {
+          // 直开浏览器：合成握手，开发体验不依赖桌面端
+          setStatus("独立模式");
+          queueMicrotask(() => mockHost({ kind: "ui.ready" }));
+        }
+
+        /* ---------------- 文档渲染与编辑 ---------------- */
+
+        function applyDoc(json, path) {
+          let parsed;
+          try {
+            parsed = JSON.parse(json);
+          } catch {
+            showHint("文档不是合法 JSON，面板拒绝覆盖（避免写坏）", true);
+            return;
+          }
+          docPath = path || docPath;
+          // 保留 agent 可能写入的额外字段，只接管 title/body
+          docData = {
+            ...(parsed && typeof parsed === "object" ? parsed : {}),
+            version: DOC_VERSION,
+            title: String(parsed?.title ?? ""),
+            body: String(parsed?.body ?? ""),
+          };
+          applying = true;
+          ui.title.value = docData.title;
+          ui.body.value = docData.body;
+          applying = false;
+          ui.title.disabled = false;
+          ui.body.disabled = false;
+          ui.ask.disabled = false;
+          ui.create.disabled = false;
+          ui.meta.textContent = [workspace, docPath].filter(Boolean).join(" · ");
+          setStatus("已就绪", false);
+          showHint("", false);
+        }
+
+        function enterUnbound() {
+          docPath = null;
+          applying = true;
+          ui.title.value = "";
+          ui.body.value = "";
+          applying = false;
+          ui.title.disabled = true;
+          ui.body.disabled = true;
+          ui.ask.disabled = true;
+          ui.create.disabled = false;
+          ui.meta.textContent = workspace ? `${workspace} · 未绑定文档` : "未绑定文档";
+          setStatus("未绑定", false);
+          showHint("点「新建笔记」，或让 agent 在工作区写一个 *.note.json");
+        }
+
+        function pushChange() {
+          if (applying || !docPath) return;
+          docData = {
+            ...docData,
+            title: ui.title.value,
+            body: ui.body.value,
+            updatedAt: new Date().toISOString(),
+          };
+          setStatus("编辑中…", true);
+          showHint("", false);
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(() => {
+            // 宿主侧还有 800ms 防抖写盘；这里 300ms 只为减少消息量
+            post({ kind: "doc.change", json: JSON.stringify(docData, null, 2) });
+          }, 300);
+        }
+
+        ui.title.addEventListener("input", pushChange);
+        ui.body.addEventListener("input", pushChange);
+
+        ui.create.addEventListener("click", () => {
+          const path = `note-${stamp()}.note.json`;
+          const data = {
+            version: DOC_VERSION,
+            title: "未命名笔记",
+            body: "",
+            updatedAt: new Date().toISOString(),
+          };
+          // 宿主拒绝覆盖已有文件；doc.open 回来才代表真正落盘并绑定
+          post({ kind: "doc.create", path, json: JSON.stringify(data, null, 2) });
+        });
+
+        ui.ask.addEventListener("click", () => {
+          if (!docPath) return;
+          post({ kind: "agent.prefill", text: `请总结并润色这篇笔记：${docPath}` });
+          post({ kind: "ui.notify", text: "已把笔记路径填进输入框", level: "info" });
+        });
+
+        /* ---------------- 小工具 ---------------- */
+
+        function setTheme(theme) {
+          document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
+        }
+
+        function setStatus(text, dirty = false) {
+          ui.status.textContent = text;
+          ui.status.classList.toggle("dirty", dirty);
+        }
+
+        function showHint(text, isError) {
+          ui.hint.textContent = text;
+          ui.hint.classList.toggle("error", !!isError);
+        }
+
+        function stamp() {
+          const d = new Date();
+          const p = (n) => String(n).padStart(2, "0");
+          return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+        }
+
+        /* ---------------- 独立模式 mock 宿主 ---------------- */
+
+        const MOCK_KEY = "kova-demo-panel-note";
+
+        function loadMock() {
+          try {
+            const raw = localStorage.getItem(MOCK_KEY);
+            return raw ? JSON.parse(raw) : null;
+          } catch {
+            return null;
+          }
+        }
+
+        function saveMock(doc) {
+          try {
+            localStorage.setItem(MOCK_KEY, JSON.stringify(doc));
+          } catch {
+            /* 不透明源/隐私模式：忽略即可 */
+          }
+        }
+
+        function emit(msg) {
+          handle({ v: PROTOCOL, dir: "host", ...msg });
+        }
+
+        function mockHost(msg) {
+          let mockDoc = loadMock() || {
+            version: DOC_VERSION,
+            title: "演示笔记",
+            body: "直接用浏览器打开本文件也能编辑：内容存在 localStorage，不写工作区。",
+          };
+          switch (msg.kind) {
+            case "ui.ready":
+              emit({
+                kind: "handshake",
+                theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
+                context: { workspaceName: "standalone", fileRelPath: "demo.note.json" },
+              });
+              return;
+            case "doc.request":
+              emit({ kind: "doc.open", rev: 1, json: JSON.stringify(mockDoc, null, 2), path: "demo.note.json" });
+              return;
+            case "doc.change":
+            case "doc.create": {
+              mockDoc = JSON.parse(msg.json);
+              saveMock(mockDoc);
+              if (msg.kind === "doc.create") {
+                emit({ kind: "doc.open", rev: 1, json: msg.json, path: msg.path });
+              } else {
+                emit({ kind: "doc.saved", rev: 1 });
+              }
+              return;
+            }
+            case "agent.prefill":
+              console.log("[standalone] agent.prefill →", msg.text);
+              emit({ kind: "ui.notify", text: "独立模式：agent.prefill 只输出到控制台" });
+              return;
+            case "ui.notify":
+              console.log("[standalone] ui.notify →", msg.text);
+              return;
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

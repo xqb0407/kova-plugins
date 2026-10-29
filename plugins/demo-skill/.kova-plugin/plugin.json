@@ -1,0 +1,10 @@
+{
+  "name": "demo-skill",
+  "version": "0.1.0",
+  "description": "最小技能型插件示例：把一段流水账整理成结构化周报。只含 skills/ 目录，无面板、无构建、无依赖，可直接作为写新技能插件的起点",
+  "author": { "name": "Kova" },
+  "category": "示例",
+  "icon": "icon.svg",
+  "keywords": ["demo", "skill", "weekly-report", "周报"],
+  "skills": "skills"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "kova-plugins",
+  "displayName": "我的 Kova 插件",
+  "plugins": [
+    {
+      "name": "demo-skill",
+      "source": "./plugins/demo-skill",
+      "version": "0.1.0",
+      "description": "最小技能型插件示例：把一段流水账整理成结构化周报（只含 skills/，无构建、无依赖）",
+      "category": "示例",
+      "keywords": ["demo", "skill", "weekly-report"]
+    },
+    {
+      "name": "demo-panel",
+      "source": "./plugins/demo-panel",
+      "version": "0.1.0",
+      "description": "最小面板型插件示例：编辑 *.note.json 快速笔记，演示 kova-ui-plugin/1 桥协议（握手 / 读写文档 / 提示 / 预填）",
+      "category": "示例",
+      "keywords": ["demo", "panel", "note"]
+    }
+  ]
+}
