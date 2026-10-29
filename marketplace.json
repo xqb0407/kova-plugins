@@ -5,10 +5,19 @@
     {
       "name": "rea",
       "source": "./plugins/rea",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "REA 逆向分析：静态分析 Mach-O / PE / ELF 二进制——格式与哈希、段表与熵、导入导出与可疑 API、字符串与 IOC、字节搜索、分块熵图、反汇编。零外部依赖，只读不执行样本",
       "category": "安全",
-      "keywords": ["rea", "reverse-engineering", "binary", "macho", "pe", "elf", "malware-analysis", "逆向"]
+      "keywords": [
+        "rea",
+        "reverse-engineering",
+        "binary",
+        "macho",
+        "pe",
+        "elf",
+        "malware-analysis",
+        "逆向"
+      ]
     },
     {
       "name": "demo-skill",
@@ -16,7 +25,11 @@
       "version": "0.1.0",
       "description": "最小技能型插件示例：把一段流水账整理成结构化周报（只含 skills/，无构建、无依赖）",
       "category": "示例",
-      "keywords": ["demo", "skill", "weekly-report"]
+      "keywords": [
+        "demo",
+        "skill",
+        "weekly-report"
+      ]
     },
     {
       "name": "demo-panel",
@@ -24,7 +37,11 @@
       "version": "0.1.0",
       "description": "最小面板型插件示例：编辑 *.note.json 快速笔记，演示 kova-ui-plugin/1 桥协议（握手 / 读写文档 / 提示 / 预填）",
       "category": "示例",
-      "keywords": ["demo", "panel", "note"]
+      "keywords": [
+        "demo",
+        "panel",
+        "note"
+      ]
     }
   ]
 }

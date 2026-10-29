@@ -13,43 +13,66 @@ description: 对二进制样本做逆向工程静态分析（Mach-O / PE / ELF�
 - 只在合法授权范围内做：自己的软件、恶意样本分析、教学/CTF、互操作性研究。
 - 不提供破解授权、绕过保护机制、规避检测（免杀）方面的指导；遇到这类请求，说明边界并停在分析层面。
 
+## 控制面：`mcp` 网关
+
+本插件的 MCP 工具**不会作为独立工具**出现在工具表里——Kova 用常驻的 `mcp` 网关代理
+所有 MCP 工具。调用三步：
+
+1. `mcp({ action: "search", query: "rea" })` → 拿全名（`rea__rea_analyze` 等）；
+2. `mcp({ action: "describe", tool: "rea__rea_analyze" })` → 看参数 schema；
+3. `mcp({ action: "call", tool: "rea__rea_analyze", args: "{\"path\": \"/bin/ls\"}" })` → 执行。
+
+要点：
+
+- 全名约定 `<server>__<tool>`，本插件 server 名是 `rea`，所以是 `rea__rea_analyze`、
+  `rea__rea_strings` 这样；
+- `args` 是 **JSON 对象的字符串**（不是对象字面量）；
+- 连接是**懒的**：第一次 `call` 才建立连接。刚装好插件时 `search` 可能还搜不到
+  （索引来自上次握手缓存），直接按全名 `call` 即可；`mcp({ action: "status" })`
+  可确认 `rea` 是否已配置/已连接；
+- 下文工具名（`rea_analyze` 等）都是 server 内的原始名，实际调用要加 `rea__` 前缀。
+
 ## 工作流（按顺序，别跳）
 
-### 1. 建档：`rea_analyze`
+### 1. 建档：`rea__rea_analyze`
 
 一次拿到：文件哈希（md5/sha1/sha256）、格式与架构、入口点与所在节、段表摘要、导入导出统计、
 可疑 API 预筛、加壳/加密线索（`triage.packing`）。
+
+```text
+mcp({ action: "call", tool: "rea__rea_analyze", args: "{\"path\": \"/bin/ls\"}" })
+```
 
 - universal Mach-O 默认分析第一个切片；要看另一个架构传 `arch`。
 - 解析失败（`error` 字段）不影响后续无结构分析，继续走 2–4。
 - **记下 sha256**，报告里必填。
 
-### 2. 字符串与 IOC：`rea_strings`
+### 2. 字符串与 IOC：`rea__rea_strings`
 
 先默认跑一遍（both 编码，minLength 4），再按需要收窄：
 
-- 只找网络线索：`classes: ["url","domain","ipv4"]`
-- 只找命令/外联行为：`classes: ["command","posixpath","winpath","registry"]`
-- 只找密钥：`classes: ["secret-keyword","pem","jwt","base64?"]`
+- 只找网络线索：`"classes": ["url","domain","ipv4"]`
+- 只找命令/外联行为：`"classes": ["command","posixpath","winpath","registry"]`
+- 只找密钥：`"classes": ["secret-keyword","pem","jwt","base64?"]`
 - 已知大致区域：配合 `rea_entropy` / `rea_sections` 的偏移，用 `offset` + `size` 只看那一段。
 
 `offset` 是文件偏移，转 VA 时用 `rea_sections` 的「文件偏移 → va」对照。
 
-### 3. 能力面：`rea_imports`
+### 3. 能力面：`rea__rea_imports`
 
 `total` 少、`libraries` 集中或为 0，本身就是结论（静态链接 / 加壳 / 只用系统调用）。
 
-- 快速过：`suspiciousOnly: true`，看命中的分类（进程注入、反调试、网络、加密、持久化、凭证、键盘/屏幕…）。
-- 深挖某个库：`library: "kernel32"` / `"libSystem"`。
+- 快速过：`"suspiciousOnly": true`，看命中的分类（进程注入、反调试、网络、加密、持久化、凭证、键盘/屏幕…）。
+- 深挖某个库：`"library": "kernel32"` / `"libSystem"`。
 - 可疑 API 是**能力**不是**行为**：命中 `OpenProcess` 只说明「能打开进程」，是否注入要看反汇编调用点。
 
-### 4. 结构定位：`rea_sections` + `rea_entropy`
+### 4. 结构定位：`rea__rea_sections` + `rea__rea_entropy`
 
 - `rea_sections`：每节 VA 范围、文件偏移、熵、权限。反汇编前先在这里找目标地址范围。
 - `rea_entropy`：连续高熵区间 = 压缩/加密载荷、加密配置、资源包。拿 `offset` 去 `rea_strings`/`rea_search` 看内容。
 - 判断加壳至少两条线索：高熵节 + 导入稀少 / 入口不在可执行节 / 壳节名（UPX0、.aspack…）/ W+X 节。
 
-### 5. 验证：`rea_disasm`
+### 5. 验证：`rea__rea_disasm`
 
 限定目标再反汇编，别整份 dump：
 
@@ -128,19 +151,22 @@ description: 对二进制样本做逆向工程静态分析（Mach-O / PE / ELF�
 
 ## 工具速查
 
-| 工具 | 用途 | 关键参数 |
+| 全名 | 用途 | 关键参数 |
 | --- | --- | --- |
-| `rea_analyze` | 总览 + 哈希 + 加壳判断 | `path`, `arch` |
-| `rea_sections` | 段/节地址范围、偏移、熵、权限 | `path`, `arch` |
-| `rea_imports` | 导入 + 可疑 API 分类 | `suspiciousOnly`, `library`, `limit` |
-| `rea_exports` | 导出符号与地址 | `filter`, `limit` |
-| `rea_strings` | 字符串 + IOC 分类 | `classes`, `filter`, `offset`, `size`, `encoding` |
-| `rea_search` | hex / ascii / utf16le 搜索 | `mode`, `pattern`, `context` |
-| `rea_entropy` | 分块熵图 | `blockSize`, `threshold` |
-| `rea_disasm` | objdump 反汇编 | `symbol` / `section` / `start`+`stop` / `arch` |
+| `rea__rea_analyze` | 总览 + 哈希 + 加壳判断 | `path`, `arch` |
+| `rea__rea_sections` | 段/节地址范围、偏移、熵、权限 | `path`, `arch` |
+| `rea__rea_imports` | 导入 + 可疑 API 分类 | `suspiciousOnly`, `library`, `limit` |
+| `rea__rea_exports` | 导出符号与地址 | `filter`, `limit` |
+| `rea__rea_strings` | 字符串 + IOC 分类 | `classes`, `filter`, `offset`, `size`, `encoding` |
+| `rea__rea_search` | hex / ascii / utf16le 搜索 | `mode`, `pattern`, `context` |
+| `rea__rea_entropy` | 分块熵图 | `blockSize`, `threshold` |
+| `rea__rea_disasm` | objdump 反汇编 | `symbol` / `section` / `start`+`stop` / `arch` |
 
 ## 故障排查
 
+- **工具表里没有 `rea_*`**：正常——MCP 工具经 `mcp` 网关调用，全名是 `rea__rea_analyze`；
+  先 `mcp({ action: "status" })` 看服务器，再按全名 `call`。
+- **`mcp search` 搜不到 rea**：首次连接前索引里没有它；直接按全名 `call`（调用时建立连接）。
 - **「找不到 objdump」**：macOS 装 Xcode Command Line Tools（`xcode-select --install`）；Linux 装 binutils。
 - **fat 包报「没有架构 X」**：错误信息里会列出可选架构，换 `arch` 或省略。
 - **反汇编空输出**：地址不是 VA，或不在可执行节；先用 `rea_sections` 确认范围，或改用 `symbol`。

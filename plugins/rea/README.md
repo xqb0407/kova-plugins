@@ -17,7 +17,19 @@
 
 推送到远端后也可以「添加市场 → Git」填仓库地址，更新走 push → 刷新市场 → 更新插件。
 
-装好后新开会话说「用 rea 分析一下 /bin/ls」即可；工具名统一是 `rea_*`。
+装好后新开会话说「用 rea 分析一下 /bin/ls」即可。
+
+**在 Kova 里怎么调用**：MCP 工具不会作为独立工具注册，而是经常驻的 `mcp` 网关代理，
+全名 `<server>__<tool>`（本插件 server 名 `rea`）：
+
+```text
+mcp({ action: "status" })                                     # 确认 rea 已配置
+mcp({ action: "call", tool: "rea__rea_analyze",
+      args: "{\"path\": \"/bin/ls\"}" })                    # args 是 JSON 字符串
+```
+
+连接是懒的：第一次 `call` 才建立连接，所以刚装完时 `mcp search` 可能还搜不到；
+直接按全名 call 即可。
 
 ## 目录结构
 
@@ -46,7 +58,9 @@ plugins/rea/
 
 ## MCP 工具
 
-所有工具第一个参数都是 `path`：绝对路径，或相对会话工作区（`KOVA_WORKSPACE`）。
+下面写的是 server 内的原始工具名；在 Kova 里经 `mcp` 网关调用时加 `rea__` 前缀，
+`args` 传 JSON 对象的字符串（见上一节）。所有工具第一个参数都是 `path`：
+绝对路径，或相对会话工作区（`KOVA_WORKSPACE`）。
 
 ### `rea_analyze` — 总览（第一步）
 
