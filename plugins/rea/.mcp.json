@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rea": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": ["run", "${PLUGIN_ROOT}/mcp/server.ts"],
+      "env": { "KOVA_WORKSPACE": "${WORKSPACE}" },
+      "description": "REA 逆向分析工具面：静态分析 Mach-O/PE/ELF —— 概览与哈希、段表与熵、导入导出、字符串与 IOC、字节搜索、分块熵图、反汇编（调用系统 objdump）。只读，不执行样本"
+    }
+  }
+}

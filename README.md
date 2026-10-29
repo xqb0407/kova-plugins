@@ -3,9 +3,22 @@
 独立于 `kova-electron` 主仓的 Kova 插件仓库。每个插件一个目录，根部的
 `marketplace.json` 就是市场清单——Kova 的「插件 → 添加市场」直接读它。
 
-仓库刻意保持零依赖、零构建：面板就是自包含的单文件 HTML，克隆下来即可用。
+仓库刻意保持零依赖、零构建：面板就是自包含的单文件 HTML，MCP 服务器是手写的
+stdio JSON-RPC（由 Kova 内置运行时拉起，用户机器不用装 node/bun），克隆下来即可用。
 （需要 React/Vite 的复杂面板，参照主仓 `plugins/canvas` 的
 `vite-plugin-singlefile` 配置，构建产物拷到插件根并把 `entry` 指过去，产物入库。）
+
+## 插件一览
+
+| 插件 | 形态 | 说明 |
+| --- | --- | --- |
+| `rea` | 技能 + MCP | 逆向工程静态分析（Mach-O / PE / ELF）：哈希、段表与熵、导入导出与可疑 API、字符串与 IOC、字节搜索、分块熵图、objdump 反汇编。只读，不执行样本 |
+| `demo-skill` | 技能 | 最小技能型示例（周报整理），用于对照格式，可删 |
+| `demo-panel` | 面板 | 最小面板型示例（`*.note.json` 快速笔记），演示 kova-ui-plugin/1 桥，可删 |
+
+`rea` 的工具：`rea_analyze`（总览）、`rea_sections`、`rea_imports`、`rea_exports`、
+`rea_strings`、`rea_search`、`rea_entropy`、`rea_disasm`。限制：macOS 的 objdump/otool
+只能反汇编 Mach-O 的 `__TEXT,__text`，其它节需要 IDA / Hopper / Ghidra。
 
 ## 快速开始
 
@@ -41,6 +54,12 @@
 kova-plugins/
 ├── marketplace.json              # 市场清单：plugins[] 即本仓库的插件白名单
 └── plugins/
+    ├── rea/                      # 技能 + MCP：逆向分析
+    │   ├── .kova-plugin/plugin.json
+    │   ├── .mcp.json
+    │   ├── icon.svg
+    │   ├── skills/rea/SKILL.md
+    │   └── mcp/                  # server.ts + tools.ts + lib/（解析器、字符串、熵、反汇编）
     ├── demo-skill/               # 技能型：清单 + skills/，无面板
     │   ├── .kova-plugin/plugin.json
     │   ├── icon.svg
@@ -52,7 +71,7 @@ kova-plugins/
         └── demo-panel.html
 ```
 
-两个示例插件都可以直接删掉，按下面的规范放自己的插件。
+两个 `demo-*` 插件可以直接删掉，按下面的规范放自己的插件。
 
 ## 新建一个插件
 
