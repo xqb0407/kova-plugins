@@ -20,6 +20,21 @@
       ]
     },
     {
+      "name": "gitlab",
+      "source": "./plugins/gitlab",
+      "version": "0.1.0",
+      "description": "GitLab 工作流：项目检索、issue 与评论、MR 详情与 diff、审批状态、CI 流水线与作业日志、最近提交。支持 gitlab.com 与自建实例；零依赖，token 只从用户级配置或 macOS 钥匙串读取",
+      "category": "开发",
+      "keywords": [
+        "gitlab",
+        "merge-request",
+        "code-review",
+        "issue",
+        "ci",
+        "pipeline"
+      ]
+    },
+    {
       "name": "demo-skill",
       "source": "./plugins/demo-skill",
       "version": "0.1.0",

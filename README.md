@@ -12,6 +12,7 @@ stdio JSON-RPC（由 Kova 内置运行时拉起，用户机器不用装 node/bun
 
 | 插件 | 形态 | 说明 |
 | --- | --- | --- |
+| `gitlab` | 技能 + MCP | GitLab 工作流：项目、issue 与评论、MR 与 diff、审批、CI 流水线与作业日志、提交。只读为主，2 个评论写入工具 |
 | `rea` | 技能 + MCP | 逆向工程静态分析（Mach-O / PE / ELF）：哈希、段表与熵、导入导出与可疑 API、字符串与 IOC、字节搜索、分块熵图、objdump 反汇编。只读，不执行样本 |
 | `demo-skill` | 技能 | 最小技能型示例（周报整理），用于对照格式，可删 |
 | `demo-panel` | 面板 | 最小面板型示例（`*.note.json` 快速笔记），演示 kova-ui-plugin/1 桥，可删 |
@@ -54,6 +55,13 @@ stdio JSON-RPC（由 Kova 内置运行时拉起，用户机器不用装 node/bun
 kova-plugins/
 ├── marketplace.json              # 市场清单：plugins[] 即本仓库的插件白名单
 └── plugins/
+    ├── gitlab/                   # 技能 + MCP：GitLab API 工作流
+    │   ├── .kova-plugin/plugin.json
+    │   ├── .mcp.json
+    │   ├── icon.svg
+    │   ├── README.md
+    │   ├── skills/gitlab/SKILL.md
+    │   └── mcp/                  # server.ts + tools.ts + lib/（config/client/format）
     ├── rea/                      # 技能 + MCP：逆向分析
     │   ├── .kova-plugin/plugin.json
     │   ├── .mcp.json
