@@ -5,8 +5,9 @@
 
 仓库刻意保持零依赖、零构建：面板就是自包含的单文件 HTML，MCP 服务器是手写的
 stdio JSON-RPC（由 Kova 内置运行时拉起，用户机器不用装 node/bun），克隆下来即可用。
-（需要 React/Vite 的复杂面板，参照主仓 `plugins/canvas` 的
-`vite-plugin-singlefile` 配置，构建产物拷到插件根并把 `entry` 指过去，产物入库。）
+（需要 React/Vite 的复杂面板，参照本仓 `plugins/canvas` 的 `vite-plugin-singlefile`
+配置，构建产物拷到插件根并把 `entry` 指过去，产物入库——`canvas` / `office` /
+`ui-design` 三个工作台插件就是这种形态，见下文「构建重面板」。）
 
 ## 插件一览
 
@@ -14,12 +15,28 @@ stdio JSON-RPC（由 Kova 内置运行时拉起，用户机器不用装 node/bun
 | --- | --- | --- |
 | `gitlab` | 技能 + MCP | GitLab 工作流：项目、issue 与评论、MR 与 diff、审批、CI 流水线与作业日志、提交。只读为主，2 个评论写入工具 |
 | `rea` | 技能 + MCP | 逆向工程静态分析（Mach-O / PE / ELF）：哈希、段表与熵、导入导出与可疑 API、字符串与 IOC、字节搜索、分块熵图、objdump 反汇编。只读，不执行样本 |
+| `canvas` | 技能 + 面板 | 无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG；agent 以 `*.canvas.json` 文档协作 |
+| `office` | 技能 + 面板 + MCP | 办公套件工作台：幻灯片（逐页编辑、放映、导出 pptx/pdf/svg/html）+ 表格（Univer）+ 文档；agent 以 `.deck.canvas.json` / `.sheet.univer.json` / `.doc.univer.json` 协作 |
+| `ui-design` | 技能 + 面板 + MCP | Figma 式 UI 设计工作台：页面/画板/图层树 + 完整属性检视，独立 `*.uidesign.json` 文档；自带 MCP 工具，agent 可直接控制画布 |
 | `demo-skill` | 技能 | 最小技能型示例（周报整理），用于对照格式，可删 |
 | `demo-panel` | 面板 | 最小面板型示例（`*.note.json` 快速笔记），演示 kova-ui-plugin/1 桥，可删 |
 
 `rea` 的工具：`rea_analyze`（总览）、`rea_sections`、`rea_imports`、`rea_exports`、
 `rea_strings`、`rea_search`、`rea_entropy`、`rea_disasm`。限制：macOS 的 objdump/otool
 只能反汇编 Mach-O 的 `__TEXT,__text`，其它节需要 IDA / Hopper / Ghidra。
+
+## 构建重面板（canvas / office / ui-design）
+
+这三个插件的面板是 React + Vite 单文件应用，源码在各自 `ui/` 子目录，构建产物
+（插件根的 `canvas.html` / `office.html` / `design.html`）**已入库**——普通使用者
+克隆即用，无需构建。改面板源码时才需要：
+
+```bash
+cd plugins/canvas && bun install && bun run build   # office、ui-design 同理
+```
+
+构建把 `ui/dist/index.html` 拷为插件根的 `<name>.html`（postbuild 自动），
+提交产物即可。`node_modules/` 与 `ui/dist/` 不入库。
 
 ## 快速开始
 
@@ -72,11 +89,37 @@ kova-plugins/
     │   ├── .kova-plugin/plugin.json
     │   ├── icon.svg
     │   └── skills/demo-skill/SKILL.md
-    └── demo-panel/               # 面板型：清单 + panels.json + 单文件 HTML
+    ├── demo-panel/               # 面板型：清单 + panels.json + 单文件 HTML
+    │   ├── .kova-plugin/plugin.json
+    │   ├── panels.json
+    │   ├── icon.svg
+    │   └── demo-panel.html
+    ├── canvas/                   # 无限画布：React+Vite 重面板（产物 canvas.html 入库）
+    │   ├── .kova-plugin/plugin.json
+    │   ├── panels.json
+    │   ├── icon.svg
+    │   ├── canvas.html           # 构建产物，入库
+    │   ├── skills/
+    │   ├── ui/                   # 面板源码（vite 单文件构建）
+    │   └── package.json
+    ├── office/                   # 幻灯片/表格/文档：重面板 + MCP（产物 office.html 入库）
+    │   ├── .kova-plugin/plugin.json
+    │   ├── .mcp.json
+    │   ├── panels.json
+    │   ├── icon.svg
+    │   ├── office.html           # 构建产物，入库
+    │   ├── skills/
+    │   ├── mcp/
+    │   └── ui/
+    └── ui-design/                # UI 设计：重面板 + MCP（产物 design.html 入库）
         ├── .kova-plugin/plugin.json
+        ├── .mcp.json
         ├── panels.json
         ├── icon.svg
-        └── demo-panel.html
+        ├── design.html           # 构建产物，入库
+        ├── skills/
+        ├── mcp/
+        └── ui/
 ```
 
 两个 `demo-*` 插件可以直接删掉，按下面的规范放自己的插件。
@@ -196,7 +239,7 @@ description: 什么时候该用这个技能（写触发场景，别写功能清�
 
 ## MCP 工具（可选）
 
-`.mcp.json` 里可以引用插件内文件和工作区，主仓 `plugins/ui-design/.mcp.json` 是现成例子：
+`.mcp.json` 里可以引用插件内文件和工作区，`plugins/ui-design/.mcp.json` 是现成例子：
 
 ```json
 {
@@ -226,8 +269,11 @@ node scripts/check.mjs
 
 ## 参考
 
-主仓 `kova-electron` 里的三个内置插件是完整实现，遇到协议细节先看它们：
+`canvas` / `office` / `ui-design` 三个工作台插件是完整实现，遇到协议细节先看它们：
 
 - `plugins/canvas` —— 无限画布（React + Vite 单文件构建、大量桥消息）
 - `plugins/office` —— 幻灯片/表格
 - `plugins/ui-design` —— UI 设计 + 自带 MCP 服务器
+
+桥协议的宿主端实现在主仓 `kova-electron` 的
+`apps/desktop/lib/plugins/ui-plugin-bridge.ts`。

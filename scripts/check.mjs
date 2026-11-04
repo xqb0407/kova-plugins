@@ -96,8 +96,13 @@ function checkPlugin(entry, catalogDir) {
     if (!existsSync(entryPath)) bad(`panels[${i}].entry 不存在：${p.entry}`);
     else {
       const html = readFileSync(entryPath, "utf8");
-      if (!html.includes('"kova-ui-plugin/1"')) bad(`面板 ${p.entry} 没有实现 kova-ui-plugin/1 桥`);
-      if (/<(script|link)[^>]+(src|href)=["'](?!data:)/i.test(html)) {
+      // 桥协议常量在手写 HTML 里是引号字符串，vite/esbuild 单文件构建产物里
+      // 可能被压成反引号模板串，所以只认裸子串。
+      if (!html.includes("kova-ui-plugin/1")) bad(`面板 ${p.entry} 没有实现 kova-ui-plugin/1 桥`);
+      // 只拦真实的静态外部引用（相对/绝对路径与 http URL）。运行时字符串拼接
+      // （如压缩产物里的 `<script src="\`+i+\`">`）不是 blob iframe 下的静态引用，
+      // 不算 404 风险。
+      if (/<(script|link)[^>]+(src|href)=["'](\/|\.\.?\/|https?:)/i.test(html)) {
         bad(`面板 ${p.entry} 引用了外部资源（宿主用 blob iframe，相对路径会 404）`);
       }
       ok(`面板 ${p.id} → ${p.entry}`);

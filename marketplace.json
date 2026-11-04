@@ -57,6 +57,49 @@
         "panel",
         "note"
       ]
+    },
+    {
+      "name": "canvas",
+      "source": "./plugins/canvas",
+      "version": "0.1.0",
+      "description": "无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG",
+      "category": "效率",
+      "keywords": [
+        "canvas",
+        "whiteboard",
+        "diagram"
+      ]
+    },
+    {
+      "name": "ui-design",
+      "source": "./plugins/ui-design",
+      "version": "0.2.0",
+      "description": "Figma 式 UI 设计工作台：页面/画板/图层树 + 完整属性检视（填充/渐变/描边/圆角/阴影/文字），独立 *.uidesign.json 文档；自带 ui-design MCP 工具，agent 可直接控制画布（增删改节点/对齐/堆叠排版/成组）",
+      "category": "效率",
+      "keywords": [
+        "ui",
+        "design",
+        "figma",
+        "prototype",
+        "mobile"
+      ]
+    },
+    {
+      "name": "office",
+      "source": "./plugins/office",
+      "version": "0.2.0",
+      "description": "办公套件工作台：幻灯片（逐页编辑、放映、导出 pptx/pdf/svg/html）+ 表格（Univer：公式/样式/冻结/筛选，导入导出 xlsx/csv）+ 文档（标题层级/行内样式，导出 html/txt）",
+      "category": "效率",
+      "keywords": [
+        "office",
+        "slides",
+        "pptx",
+        "presentation",
+        "deck",
+        "sheets",
+        "univer",
+        "spreadsheet"
+      ]
     }
   ]
 }

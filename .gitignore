@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 *.log
+# vite 构建中间产物（面板单文件 HTML 产物入库，见 plugins/canvas 等的根级 *.html）
+**/ui/dist/
