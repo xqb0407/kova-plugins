@@ -1,0 +1,21 @@
+{
+  "name": "atlassian",
+  "displayName": "Atlassian",
+  "version": "0.1.0",
+  "description": "Atlassian 官方 Rovo MCP：检索 Jira issue、Confluence 页面与跨产品内容。插件提供远程 MCP 配置与技能，负责 OAuth、动态工具发现与写操作确认；仅支持 Atlassian Cloud",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "办公",
+  "icon": "icon.svg",
+  "keywords": [
+    "atlassian",
+    "jira",
+    "confluence",
+    "rovo",
+    "mcp",
+    "wiki"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

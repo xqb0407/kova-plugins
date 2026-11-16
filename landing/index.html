@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kova Plugins — 你的工作台，长在 Kova 里</title>
+<meta name="description" content="无限画布、办公套件、UI 设计、GitLab 工作流、逆向分析、真机控制。零依赖、零构建、克隆即用的 Kova 插件。">
+<script>
+  try {
+    var t = localStorage.getItem('kova-landing-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
+<style>
+  :root{
+    color-scheme: light;
+    --paper:#fbfaf7;
+    --paper-2:#f4f2ec;
+    --ink:#15140f;
+    --ink-2:#5d5a52;
+    --ink-3:#6f6b62;
+    --line:#e2ded4;
+    --line-2:#16150f;
+    --accent:#b44323;
+    --code-bg:#f3f1ea;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro SC","SF Pro Text","PingFang SC","Helvetica Neue",Inter,system-ui,sans-serif;
+    --serif:"Songti SC","Source Han Serif SC","Noto Serif SC","Times New Roman",Georgia,serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --w:1200px;
+    --pad:32px;
+  }
+  html[data-theme="dark"]{
+    color-scheme: dark;
+    --paper:#0d0e10;
+    --paper-2:#141518;
+    --ink:#f1efea;
+    --ink-2:#a6a39c;
+    --ink-3:#807d76;
+    --line:#26282c;
+    --line-2:#f1efea;
+    --accent:#e0784f;
+    --code-bg:#141518;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;background:var(--paper)}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    transition:background-color .25s ease,color .25s ease;
+  }
+  ::selection{background:var(--accent);color:var(--paper)}
+  a{color:inherit;text-decoration:none}
+  .wrap{width:100%;max-width:var(--w);margin:0 auto;padding-inline:var(--pad)}
+  .mono{font-family:var(--mono);font-variant-ligatures:none}
+  .kicker{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-3);margin:0;
+  }
+  .kicker b{color:var(--accent);font-weight:600}
+  .rule{height:1px;background:var(--line);width:100%}
+
+  /* ---------- 顶栏 ---------- */
+  header{
+    position:sticky;top:0;z-index:40;background:var(--paper);
+    border-bottom:1px solid var(--line);
+    transition:background-color .25s ease,border-color .25s ease;
+  }
+  .bar{display:flex;align-items:center;gap:22px;height:62px}
+  .brand{display:flex;align-items:baseline;gap:7px;font-size:14.5px;letter-spacing:-.01em;font-weight:600}
+  .brand span{color:var(--ink-3);font-weight:400}
+  .brand .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);display:inline-block;margin-bottom:2px}
+  nav.links{display:flex;gap:26px;margin-left:auto}
+  nav.links a{font-size:13px;color:var(--ink-2);position:relative;padding:4px 0}
+  nav.links a::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--ink);
+    transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.2,.7,.2,1);
+  }
+  nav.links a:hover{color:var(--ink)}
+  nav.links a:hover::after{transform:scaleX(1)}
+  .theme-btn{
+    margin-left:8px;display:inline-flex;align-items:center;gap:6px;
+    height:30px;padding:0 10px;border:1px solid var(--line);background:transparent;
+    color:var(--ink-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+    cursor:pointer;transition:border-color .2s,color .2s,background .2s;
+  }
+  .theme-btn:hover{color:var(--ink);border-color:var(--ink-3)}
+  .theme-btn svg{width:13px;height:13px}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 18px;
+    font-size:13px;font-weight:500;letter-spacing:.01em;cursor:pointer;
+    border:1px solid var(--line-2);background:transparent;color:var(--ink);
+    transition:background .2s,color .2s,border-color .2s;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .btn-solid{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .btn-solid:hover{background:transparent;color:var(--ink);border-color:var(--ink)}
+  .btn .arrow{transition:transform .24s ease}
+  .btn:hover .arrow{transform:translateX(3px)}
+  .bar .btn{margin-left:4px}
+  .btn-lg{height:46px;padding:0 22px;font-size:14px}
+
+  /* ---------- 首屏 ---------- */
+  .hero{padding-block:92px 46px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:76px;align-items:start}
+  h1{
+    font-family:var(--serif);font-weight:500;
+    font-size:clamp(38px,5.2vw,80px);line-height:1.06;letter-spacing:-.04em;
+    margin:26px 0 0;
+  }
+  h1 em{font-style:italic;letter-spacing:-.02em}
+  h1 .thin{color:var(--ink-3)}
+  .standfirst{
+    margin:30px 0 0;max-width:44ch;font-size:17px;line-height:1.72;color:var(--ink-2);
+    text-wrap:pretty;
+  }
+  .actions{display:flex;gap:10px;margin-top:36px;flex-wrap:wrap}
+  .hero-aside{padding-top:78px}
+  .hero-aside .note{
+    font-size:13px;line-height:1.8;color:var(--ink-2);margin:0;
+    border-top:1px solid var(--line-2);padding-top:14px;text-wrap:pretty;
+  }
+  .facts{display:grid;grid-template-columns:1fr 1fr;margin:26px 0 0;border-top:1px solid var(--line)}
+  .fact{padding:14px 0 12px;border-bottom:1px solid var(--line)}
+  .fact:nth-child(odd){padding-right:10px}
+  .fact b{display:block;font-family:var(--serif);font-weight:500;font-size:34px;line-height:1;letter-spacing:-.03em}
+  .fact span{display:block;margin-top:7px;font-size:11.5px;color:var(--ink-3)}
+
+  /* ---------- 通用 section ---------- */
+  section{padding-block:96px;scroll-margin-top:62px}
+  .sec-head{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:76px;align-items:end;margin-bottom:44px}
+  h2{
+    font-family:var(--serif);font-weight:500;
+    font-size:clamp(30px,4.2vw,56px);line-height:1.12;letter-spacing:-.03em;
+    margin:16px 0 0;
+  }
+  .sec-head p.lede{margin:0;font-size:14px;line-height:1.8;color:var(--ink-2);text-wrap:pretty}
+
+  /* ---------- 目录 ---------- */
+  ol.index{list-style:none;margin:0;padding:0;border-top:1px solid var(--line-2)}
+  .entry{
+    display:grid;grid-template-columns:56px minmax(0,1fr) 190px;gap:28px;align-items:start;
+    padding:26px 0 24px;border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .entry::before{
+    content:"";position:absolute;left:-32px;top:0;bottom:0;width:2px;background:var(--accent);
+    transform:scaleY(0);transform-origin:top;transition:transform .3s cubic-bezier(.2,.7,.2,1);
+  }
+  .entry:hover::before{transform:scaleY(1)}
+  .entry:hover{background:var(--paper-2)}
+  .entry .num{font-family:var(--mono);font-size:11px;color:var(--ink-3);padding-top:7px;letter-spacing:.08em}
+  .entry h3{
+    margin:0;font-size:20px;font-weight:600;letter-spacing:-.015em;
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  }
+  .entry h3 .kind{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--ink-3);letter-spacing:.04em}
+  .entry p{margin:8px 0 0;font-size:13.5px;line-height:1.76;color:var(--ink-2);max-width:60ch;text-wrap:pretty}
+  .entry .meta{display:flex;flex-wrap:wrap;gap:5px;padding-top:5px;justify-content:flex-end}
+  .entry .meta span{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);border:1px solid var(--line);padding:3px 7px}
+  .index-foot{
+    display:flex;justify-content:space-between;gap:20px;padding-top:14px;
+    font-size:11.5px;color:var(--ink-3);flex-wrap:wrap;
+  }
+
+  /* ---------- 三种形态 ---------- */
+  .forms{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line-2)}
+  .form{padding:30px 30px 34px 0;border-right:1px solid var(--line)}
+  .form:last-child{border-right:0;padding-right:0}
+  .form .n{font-family:var(--mono);font-size:10.5px;color:var(--accent);letter-spacing:.14em}
+  .form h3{font-family:var(--serif);font-weight:500;font-size:27px;letter-spacing:-.02em;margin:16px 0 0}
+  .form p{margin:12px 0 0;font-size:13.5px;line-height:1.78;color:var(--ink-2);max-width:34ch;text-wrap:pretty}
+  .form .chips{display:flex;gap:14px;flex-wrap:wrap;margin-top:22px}
+  .form .chips span{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);border-bottom:1px solid var(--line);padding-bottom:2px}
+
+  /* ---------- 安装 ---------- */
+  .steps{border-top:1px solid var(--line-2)}
+  .step{
+    display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,.9fr);gap:28px;
+    padding:28px 0;border-bottom:1px solid var(--line);align-items:center;
+  }
+  .step .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.08em;align-self:start;padding-top:6px}
+  .step h3{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+  .step p{margin:8px 0 0;font-size:13.5px;line-height:1.78;color:var(--ink-2);text-wrap:pretty}
+  .step .code-line{
+    font-family:var(--mono);font-size:12px;color:var(--ink);
+    background:var(--code-bg);border:1px solid var(--line);padding:11px 13px;
+    word-break:break-all;line-height:1.6;
+  }
+  .step .hint{font-size:12.5px;color:var(--ink-3);line-height:1.7}
+
+  /* ---------- 开发 ---------- */
+  .dev{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:72px;align-items:start}
+  .dev p.copy{margin:18px 0 0;font-size:15px;line-height:1.8;color:var(--ink-2);max-width:42ch;text-wrap:pretty}
+  .dev .actions{margin-top:28px}
+  .code{border:1px solid var(--line);background:var(--code-bg);overflow:hidden}
+  .code-bar{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.03em;
+  }
+  .code-bar i{width:6px;height:6px;border:1px solid var(--ink-3);border-radius:50%;display:block}
+  .code pre{
+    margin:0;padding:18px 18px 22px;overflow:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.9;color:var(--ink);
+  }
+  .k{color:var(--accent)}
+  .s{color:#3f7a5c}
+  html[data-theme="dark"] .s{color:#7fb894}
+  .c{color:var(--ink-3)}
+
+  /* ---------- 结尾 ---------- */
+  .cta{border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);padding:76px 0 70px}
+  .cta-inner{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:76px;align-items:end}
+  .cta h2{font-size:clamp(34px,5vw,68px);margin:14px 0 0}
+  .cta .actions{margin-top:0;justify-content:flex-end}
+  .cta .side p{margin:0;font-size:13px;line-height:1.8;color:var(--ink-2);border-top:1px solid var(--line);padding-top:14px}
+
+  footer{padding:38px 0 46px}
+  .foot{display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3)}
+  .foot .links{margin-left:auto;display:flex;gap:22px}
+  .foot a:hover{color:var(--ink)}
+  .foot .mark{font-family:var(--serif);font-size:13px;color:var(--ink-2)}
+
+  /* ---------- 动效 ---------- */
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  .entry.reveal{transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1),background-color .22s ease}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    html{scroll-behavior:auto}
+    .entry::before{transition:none}
+  }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width:1020px){
+    .hero-grid,.sec-head,.cta-inner{grid-template-columns:1fr;gap:34px}
+    .hero-aside,.cta .side{max-width:420px}
+    .hero-aside{padding-top:0}
+    .cta .actions{justify-content:flex-start;margin-top:22px}
+    .facts{max-width:320px}
+    .forms{grid-template-columns:1fr}
+    .form{border-right:0;border-bottom:1px solid var(--line);padding:26px 0}
+    .form:last-child{border-bottom:0}
+    .form p{max-width:52ch}
+    .dev{grid-template-columns:1fr;gap:34px}
+    nav.links{display:none}
+  }
+  @media (max-width:760px){
+    :root{--pad:20px}
+    .hero{padding-block:56px 34px}
+    section{padding-block:64px}
+    .entry{grid-template-columns:34px minmax(0,1fr);gap:14px;padding:22px 0}
+    .entry .meta{grid-column:2;justify-content:flex-start;padding-top:12px}
+    .entry::before{left:-20px}
+    .step{grid-template-columns:34px minmax(0,1fr);gap:14px;align-items:start}
+    .step .code-line,.step .hint{grid-column:2}
+    .step .code-line{margin-top:12px}
+    h1{font-size:clamp(34px,9vw,48px)}
+    .standfirst{font-size:15.5px}
+    .cta{padding:54px 0 50px}
+    .cta .actions{justify-content:flex-start}    .theme-btn span{display:none}
+    .foot .links{margin-left:0;width:100%}
+    .bar{gap:10px}
+  }
+</style>
+</head>
+<body>
+<noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#top"><span class="dot"></span>Kova <span>Plugins</span></a>
+    <nav class="links">
+      <a href="#plugins">插件目录</a>
+      <a href="#forms">交付形态</a>
+      <a href="#install">安装</a>
+      <a href="#dev">开发</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="切换明暗主题">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      <span id="themeLabel">暗色</span>
+    </button>
+    <a class="btn btn-solid" href="#install">添加到 Kova</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- 首屏 -->
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="kicker reveal"><b>01</b> — 插件仓库 · 共 8 条</p>
+        <h1 class="reveal">你的工作台，<br>长在 <em>Kova</em> 里。</h1>
+        <p class="standfirst reveal">
+          无限画布、办公套件、UI 设计、GitLab 工作流、逆向分析、真机控制——
+          不是一串要自己接起来的工具，而是装进同一个会话里的能力。
+        </p>
+        <div class="actions reveal">
+          <a class="btn btn-solid btn-lg" href="#install">装起来 <span class="arrow">→</span></a>
+          <a class="btn btn-lg" href="#plugins">看目录</a>
+        </div>
+      </div>
+      <aside class="hero-aside reveal">
+        <p class="note">
+          面板是自包含的单文件 HTML，技能是 Markdown，MCP 由宿主内建运行时拉起。
+          用户机器上不用装 node，也不用构建。
+        </p>
+        <div class="facts">
+          <div class="fact"><b>08</b><span>清单条目</span></div>
+          <div class="fact"><b>00</b><span>运行时依赖</span></div>
+          <div class="fact"><b>03</b><span>交付形态</span></div>
+          <div class="fact"><b>02</b><span>最小示例</span></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 目录 -->
+  <section id="plugins" class="wrap">
+    <div class="sec-head">
+      <div class="reveal">
+        <p class="kicker"><b>02</b> — 目录</p>
+        <h2>六个正式插件，<br>各管一段工作流。</h2>
+      </div>
+      <p class="lede reveal">
+        共同点只有一条：都能和 agent 读写同一份工作区文件。
+        装完刷新市场就生效，不用重启。
+      </p>
+    </div>
+
+    <ol class="index" role="list">
+      <li class="entry reveal">
+        <span class="num">01</span>
+        <div>
+          <h3>canvas <span class="kind">技能 + 面板</span></h3>
+          <p>Excalidraw 式无限空间：文本、形状、图片、Mermaid、表格、图表、网页嵌入自由摆放，整张画布导出 SVG。文档是 <span class="mono">*.canvas.json</span>。</p>
+        </div>
+        <div class="meta"><span>whiteboard</span><span>diagram</span></div>
+      </li>
+      <li class="entry reveal">
+        <span class="num">02</span>
+        <div>
+          <h3>office <span class="kind">技能 + 面板 + MCP</span></h3>
+          <p>幻灯片逐页编辑、放映、导出 pptx / pdf / svg / html；Univer 表格带公式、样式、冻结；文档保留标题层级与行内样式。</p>
+        </div>
+        <div class="meta"><span>pptx</span><span>xlsx</span><span>univer</span></div>
+      </li>
+      <li class="entry reveal">
+        <span class="num">03</span>
+        <div>
+          <h3>ui-design <span class="kind">技能 + 面板 + MCP</span></h3>
+          <p>页面、画板、图层树与完整属性检视（填充、渐变、描边、圆角、阴影、文字）。独立 <span class="mono">*.uidesign.json</span>，agent 可直接增删改节点、对齐、堆叠、成组。</p>
+        </div>
+        <div class="meta"><span>figma</span><span>prototype</span></div>
+      </li>
+      <li class="entry reveal">
+        <span class="num">04</span>
+        <div>
+          <h3>gitlab <span class="kind">技能 + MCP</span></h3>
+          <p>项目检索、issue 与评论、MR 详情与 diff、审批、CI 流水线与作业日志。评论写入走预览 + confirmToken 两段确认，token 只从用户配置或 macOS 钥匙串读。</p>
+        </div>
+        <div class="meta"><span>merge-request</span><span>ci</span></div>
+      </li>
+      <li class="entry reveal">
+        <span class="num">05</span>
+        <div>
+          <h3>rea <span class="kind">技能 + MCP</span></h3>
+          <p>Mach-O / PE / ELF 静态分析：段表与熵、导入导出与可疑 API、字符串与 IOC、字节搜索、分块熵图、objdump 反汇编。只读，不执行样本。</p>
+        </div>
+        <div class="meta"><span>reverse</span><span>ioc</span></div>
+      </li>
+      <li class="entry reveal">
+        <span class="num">06</span>
+        <div>
+          <h3>phone <span class="kind">技能 + MCP</span></h3>
+          <p>通过 ADB 操作真机与模拟器：截图、uiautomator 控件树、点击滑动、滚动查找、ADBKeyboard 中英文输入、启动应用、等待界面变化。每个动作可带 observe 一步取回新界面。</p>
+        </div>
+        <div class="meta"><span>android</span><span>adb</span><span>qa</span></div>
+      </li>
+    </ol>
+    <div class="index-foot">
+      <span>清单另有 <span class="mono">demo-skill</span> 与 <span class="mono">demo-panel</span> 两条最小示例，用于对照格式，可直接删。</span>
+      <span class="mono">marketplace.json</span>
+    </div>
+  </section>
+
+  <!-- 交付形态 -->
+  <section id="forms" class="wrap">
+    <div class="sec-head">
+      <div class="reveal">
+        <p class="kicker"><b>03</b> — 交付形态</p>
+        <h2>能力只有三种装法。</h2>
+      </div>
+      <p class="lede reveal">
+        技能教 agent 怎么做，面板给人一间能动手的房间，MCP 让 agent 伸手到外面。三者可以叠在同一个插件里。
+      </p>
+    </div>
+    <div class="forms">
+      <div class="form reveal">
+        <div class="n">01 / SKILL</div>
+        <h3>技能</h3>
+        <p>一份 SKILL.md，写清触发场景与操作步骤。装进系统提示词目录，模型按 description 判断何时加载。</p>
+        <div class="chips"><span>skills/</span><span>frontmatter</span><span>按需加载</span></div>
+      </div>
+      <div class="form reveal">
+        <div class="n">02 / PANEL</div>
+        <h3>面板</h3>
+        <p>自包含单文件 HTML，挂进沙箱 iframe。走 kova-ui-plugin/1 桥读写工作区文档；重面板可用 React + Vite 构建后把产物入库。</p>
+        <div class="chips"><span>panels.json</span><span>postMessage</span><span>*.json</span></div>
+      </div>
+      <div class="form reveal">
+        <div class="n">03 / MCP</div>
+        <h3>工具</h3>
+        <p>手写 stdio JSON-RPC，由宿主内建运行时拉起。经 mcp 网关搜索、描述、调用，权限逐次受控。</p>
+        <div class="chips"><span>.mcp.json</span><span>stdio</span><span>按次授权</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 安装 -->
+  <section id="install" class="wrap">
+    <div class="sec-head">
+      <div class="reveal">
+        <p class="kicker"><b>04</b> — 安装</p>
+        <h2>三步，从克隆到能用。</h2>
+      </div>
+      <p class="lede reveal">
+        目录市场适合本地开发，改完文件不用重装；推到远端后可以换成 git 市场，队里共用同一份清单。
+      </p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="n">01</span>
+        <div>
+          <h3>添加市场</h3>
+          <p>插件页 → 添加市场，类型选「目录」，填本仓库的绝对路径。</p>
+        </div>
+        <div class="code-line">~/Desktop/kova-plugins</div>
+      </div>
+      <div class="step reveal">
+        <span class="n">02</span>
+        <div>
+          <h3>安装插件</h3>
+          <p>在市场列表里挑插件，安装方式选「链接安装 · 开发」。缓存是指向源码的符号链接，改完文件即时生效。</p>
+        </div>
+        <div class="hint">清单改动后刷新市场或重装一次；面板 HTML 与 SKILL.md 改动重开面板、新开会话即生效。</div>
+      </div>
+      <div class="step reveal">
+        <span class="n">03</span>
+        <div>
+          <h3>开始用</h3>
+          <p>新会话里触发技能，或让 agent 写到 <span class="mono">.canvas.json</span>、<span class="mono">.deck.canvas.json</span>，面板会自动打开并绑定该文档。</p>
+        </div>
+        <div class="hint">推送到远端后改用 git 市场，更新流程是 commit → push → 刷新市场 → 点更新。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 开发 -->
+  <section id="dev" class="wrap">
+    <div class="dev">
+      <div class="reveal">
+        <p class="kicker"><b>05</b> — 开发</p>
+        <h2 style="margin-top:16px">写一个插件，<br>从清单开始。</h2>
+        <p class="copy">
+          目录名必须与 <span class="mono">name</span> 完全一致，声明你交付哪些组件，
+          在根部 <span class="mono">marketplace.json</span> 加一条，刷新市场就看得见。
+          发布前跑一次自检脚本，它会核对清单一致性、组件路径与面板的外部资源引用。
+        </p>
+        <div class="actions">
+          <a class="btn" href="#plugins">对照现有实现 <span class="arrow">→</span></a>
+        </div>
+      </div>
+      <div class="code reveal">
+        <div class="code-bar"><i></i><span>plugins/my-plugin/.kova-plugin/plugin.json</span></div>
+        <pre><span class="c">// 清单：声明你交付什么</span>
+{
+  <span class="k">"name"</span>: <span class="s">"my-plugin"</span>,
+  <span class="k">"version"</span>: <span class="s">"0.1.0"</span>,
+  <span class="k">"description"</span>: <span class="s">"一句话说明"</span>,
+  <span class="k">"skills"</span>: <span class="s">"skills"</span>,
+  <span class="k">"panels"</span>: <span class="s">"panels.json"</span>,
+  <span class="k">"mcpServers"</span>: <span class="s">".mcp.json"</span>
+}
+
+<span class="c">// 自检</span>
+<span class="c">$</span> node scripts/check.mjs</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 结尾 -->
+  <div class="cta">
+    <div class="wrap cta-inner">
+      <div class="reveal">
+        <p class="kicker"><b>06</b> — 开始</p>
+        <h2>少配一套工具，<br>多留点时间做正事。</h2>
+      </div>
+      <div class="side reveal">
+        <p>仓库是零依赖的，克隆下来就能装。不需要 bootstrap，也不需要等构建。</p>
+        <div class="actions">
+          <a class="btn btn-solid btn-lg" href="#install">装起来 <span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span class="mark">Kova Plugins</span>
+    <span>独立插件仓库 · 零依赖 · 克隆即用</span>
+    <div class="links">
+      <a href="#plugins">目录</a>
+      <a href="#forms">交付形态</a>
+      <a href="#install">安装</a>
+      <a href="#dev">开发规范</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('themeBtn');
+  var label = document.getElementById('themeLabel');
+  var icon = document.getElementById('themeIcon');
+
+  var SUN = '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>';
+  var MOON = '<path d="M20 14.2A8.3 8.3 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2Z"/>';
+
+  function paint() {
+    var dark = root.dataset.theme === 'dark';
+    label.textContent = dark ? '亮色' : '暗色';
+    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    icon.innerHTML = dark ? SUN : MOON;
+  }
+
+  paint();
+
+  btn.addEventListener('click', function () {
+    var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    paint();
+    try { localStorage.setItem('kova-landing-theme', next); } catch (e) {}
+  });
+
+  // 进场
+  var items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+    items.forEach(function (el, i) {
+      el.style.transitionDelay = (Math.min(i % 5, 4) * 60) + 'ms';
+      io.observe(el);
+    });
+  } else {
+    items.forEach(function (el) { el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>

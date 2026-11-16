@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sentry-mcp": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp",
+      "description": "sentry 官方远程 MCP"
+    }
+  }
+}

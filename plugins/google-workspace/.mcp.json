@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "google-workspace-gmail": {
+      "type": "http",
+      "url": "https://gmailmcp.googleapis.com/mcp/v1",
+      "description": "Gmail 官方 MCP（OAuth）"
+    },
+    "google-workspace-drive": {
+      "type": "http",
+      "url": "https://drivemcp.googleapis.com/mcp/v1",
+      "description": "Google Drive 官方 MCP（OAuth）"
+    },
+    "google-workspace-docs": {
+      "type": "http",
+      "url": "https://docsmcp.googleapis.com/mcp/v1",
+      "description": "Google Docs 官方 MCP（OAuth）"
+    },
+    "google-workspace-sheets": {
+      "type": "http",
+      "url": "https://sheetsmcp.googleapis.com/mcp/v1",
+      "description": "Google Sheets 官方 MCP（OAuth）"
+    },
+    "google-workspace-calendar": {
+      "type": "http",
+      "url": "https://calendarmcp.googleapis.com/mcp/v1",
+      "description": "Google Calendar 官方 MCP（OAuth）"
+    },
+    "google-workspace-search": {
+      "type": "http",
+      "url": "https://workspacemcp.googleapis.com/mcp/v1",
+      "description": "Workspace Universal Search 官方 MCP（OAuth）"
+    }
+  }
+}

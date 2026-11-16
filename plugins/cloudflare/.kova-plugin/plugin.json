@@ -1,0 +1,22 @@
+{
+  "name": "cloudflare",
+  "displayName": "Cloudflare",
+  "version": "0.2.0",
+  "description": "Cloudflare（wrangler + 官方 MCP）：用官方 Wrangler CLI 开发、部署和管理 Workers、Pages、D1、R2、KV 与密钥；同时附带 Cloudflare 远程 MCP（OAuth / API Token）供 agent 查询账户与资源。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "云服务",
+  "icon": "icon.svg",
+  "keywords": [
+    "cloudflare",
+    "wrangler",
+    "workers",
+    "pages",
+    "d1",
+    "r2",
+    "kv"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

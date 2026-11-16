@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "notion-mcp": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp",
+      "description": "notion 官方远程 MCP"
+    }
+  }
+}

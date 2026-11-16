@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "azure-mcp": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": [
+        "x",
+        "@azure/mcp@latest",
+        "server",
+        "start"
+      ],
+      "description": "Microsoft Azure MCP Server（复用 az login 凭证）"
+    }
+  }
+}

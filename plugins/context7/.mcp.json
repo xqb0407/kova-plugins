@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "context7-mcp": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Upstash Context7 官方 MCP（匿名可用，可选 API key 提高配额）"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "notion",
+  "displayName": "Notion",
+  "version": "0.2.0",
+  "description": "Notion（ntn + 官方 MCP）：用官方 Notion CLI 读写页面、查询数据源、调用 Notion API 与管理 Workers；同时附带 Notion 远程 MCP（OAuth）供 agent 直接检索、读取与编辑页面。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "办公",
+  "icon": "icon.svg",
+  "keywords": [
+    "notion",
+    "ntn",
+    "wiki",
+    "database",
+    "page",
+    "docs"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

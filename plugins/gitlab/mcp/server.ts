@@ -9,7 +9,7 @@ import { createInterface } from "node:readline";
 import { TOOL_DEFS, type ToolCtx } from "./tools";
 
 const SERVER_NAME = "gitlab";
-const SERVER_VERSION = "0.1.0";
+const SERVER_VERSION = "0.2.0";
 const FALLBACK_PROTOCOL = "2025-06-18";
 const KNOWN_PROTOCOLS = new Set(["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"]);
 
@@ -56,7 +56,8 @@ async function handleAsync(message: Record<string, unknown>): Promise<void> {
           "第一次使用先跑 status：它会报告配置来源、当前用户与默认项目；没有配置时按它给的指引让用户自己写\n" +
           "~/.kova/gitlab.json（chmod 600）或存进 macOS 钥匙串——绝不要让用户把 token 贴进对话。\n" +
           "常用路径：projects 找项目 → issues / mrs 列表 → issue / mr 看详情 → mr_diff 看变更 → pipelines / job_log 查 CI。\n" +
-          "写操作（issue_comment / mr_comment）发送前先把草稿给用户确认；行内 diff 评论暂不支持。\n" +
+          "写操作（issue_comment / mr_comment）是两段确认：第一次调用只返回预览 + confirmToken，把预览给用户；\n" +
+          "用户同意后带同一 confirmToken 与逐字相同参数再调一次才真正发送；令牌 5 分钟有效且绑定内容。行内 diff 评论暂不支持。\n" +
           "列表返回 nextPage 说明还有更多；diff 与日志都按行截断，不要一次拉全量。",
       });
       return;

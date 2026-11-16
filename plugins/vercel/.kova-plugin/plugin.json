@@ -1,0 +1,21 @@
+{
+  "name": "vercel",
+  "displayName": "Vercel",
+  "version": "0.2.0",
+  "description": "Vercel（vercel + 官方 MCP）：用官方 Vercel CLI 部署预览与生产、查看部署与日志、管理环境变量、检查构建与提升部署；同时附带 Vercel 远程 MCP（OAuth，Beta）供 agent 查询项目与部署。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "云服务",
+  "icon": "icon.svg",
+  "keywords": [
+    "vercel",
+    "deploy",
+    "hosting",
+    "logs",
+    "env",
+    "preview"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "ffmpeg",
+  "displayName": "FFmpeg",
+  "version": "0.1.0",
+  "description": "FFmpeg（ffmpeg / ffprobe）：用官方二进制探测媒体信息、转码、剪辑、缩放、抽帧、提取音轨与查看进度。技能负责安装检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "媒体",
+  "icon": "icon.svg",
+  "keywords": [
+    "ffmpeg",
+    "ffprobe",
+    "video",
+    "audio",
+    "transcode",
+    "media"
+  ],
+  "skills": "skills"
+}

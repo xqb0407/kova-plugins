@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "stripe-mcp": {
+      "type": "http",
+      "url": "https://mcp.stripe.com",
+      "description": "stripe 官方远程 MCP"
+    }
+  }
+}

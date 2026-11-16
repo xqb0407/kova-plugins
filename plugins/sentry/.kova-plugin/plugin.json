@@ -1,0 +1,21 @@
+{
+  "name": "sentry",
+  "displayName": "Sentry",
+  "version": "0.2.0",
+  "description": "Sentry（sentry + 官方 MCP）：用官方 Sentry CLI 检索与解释 issue、查看事件和跨度、处理 feedback、下载 replay、列出 DSN 与发布版本；同时附带 Sentry 远程 MCP（OAuth）供 agent 直接排查异常。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "可观测",
+  "icon": "icon.svg",
+  "keywords": [
+    "sentry",
+    "errors",
+    "issue",
+    "tracing",
+    "replay",
+    "observability"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "github-mcp": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "description": "github 官方远程 MCP"
+    }
+  }
+}

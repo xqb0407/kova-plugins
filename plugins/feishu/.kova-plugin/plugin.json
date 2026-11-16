@@ -1,0 +1,19 @@
+{
+  "name": "feishu",
+  "displayName": "飞书",
+  "version": "0.3.0",
+  "description": "飞书 / Lark（lark-cli）：内置官方 25 个 lark-* 技能，覆盖 IM、通讯录、云文档、多维表格、日历、任务、邮件、会议、审批等。技能负责 CLI 安装、OAuth 授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "协作",
+  "icon": "icon.svg",
+  "keywords": [
+    "feishu",
+    "lark",
+    "飞书",
+    "cli",
+    "lark-cli"
+  ],
+  "skills": "skills"
+}

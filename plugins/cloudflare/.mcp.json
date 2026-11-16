@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cloudflare-mcp": {
+      "type": "http",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "description": "cloudflare 官方远程 MCP"
+    }
+  }
+}

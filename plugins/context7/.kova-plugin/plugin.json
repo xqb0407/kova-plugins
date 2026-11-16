@@ -1,0 +1,21 @@
+{
+  "name": "context7",
+  "displayName": "Context7",
+  "version": "0.1.0",
+  "description": "Upstash Context7 MCP：按库名解析 ID 并检索最新官方文档与代码示例。插件提供远程 MCP 配置与技能，匿名即可使用，可选 API key 提高配额；负责版本核对与提示注入防范",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "context7",
+    "docs",
+    "library",
+    "mcp",
+    "upstash",
+    "reference"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

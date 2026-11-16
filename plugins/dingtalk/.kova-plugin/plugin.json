@@ -1,0 +1,19 @@
+{
+  "name": "dingtalk",
+  "displayName": "钉钉",
+  "version": "0.3.0",
+  "description": "钉钉（dws）：内置官方 16 个 dingtalk-* 技能，覆盖群聊消息、联系人、日历、待办、文档、AI 表格、邮件、会议纪要等。技能负责 CLI 安装、浏览器授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "钉钉"
+  },
+  "category": "协作",
+  "icon": "icon.svg",
+  "keywords": [
+    "dingtalk",
+    "钉钉",
+    "cli",
+    "dws",
+    "workspace-cli"
+  ],
+  "skills": "skills"
+}

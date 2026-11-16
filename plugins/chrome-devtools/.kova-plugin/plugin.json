@@ -1,0 +1,21 @@
+{
+  "name": "chrome-devtools",
+  "displayName": "Chrome DevTools",
+  "version": "0.1.0",
+  "description": "Google 官方 Chrome DevTools MCP：调试网页的控制台、网络、性能 trace 与 Lighthouse。插件提供 stdio MCP 配置与技能，负责 Chrome 版本检查、隐私与只读排查约定",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "chrome",
+    "devtools",
+    "performance",
+    "lighthouse",
+    "mcp",
+    "web"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

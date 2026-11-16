@@ -1,0 +1,21 @@
+{
+  "name": "stripe",
+  "displayName": "Stripe",
+  "version": "0.2.0",
+  "description": "Stripe（stripe + 官方 MCP）：用官方 Stripe CLI 转发和触发 webhook、查询与创建 API 资源、查看请求日志、管理客户与测试数据；同时附带 Stripe 远程 MCP（OAuth）供 agent 查询与操作 Stripe 资源。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "支付",
+  "icon": "icon.svg",
+  "keywords": [
+    "stripe",
+    "payment",
+    "webhook",
+    "subscription",
+    "billing",
+    "cli"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

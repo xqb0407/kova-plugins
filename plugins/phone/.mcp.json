@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "phone": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": ["run", "${PLUGIN_ROOT}/mcp/server.ts"],
+      "env": { "KOVA_WORKSPACE": "${WORKSPACE}" },
+      "description": "Android 手机控制（ADB）：截图、uiautomator 控件树、点击/滑动/长按、文本输入、按键、启动应用、等待界面变化。需要本机安装 Android Platform Tools 并授权 USB 调试"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "supabase",
+  "displayName": "Supabase",
+  "version": "0.2.0",
+  "description": "Supabase（supabase + 官方 MCP）：用官方 Supabase CLI 管理本地开发栈、数据库迁移、类型生成、secrets 与 Edge Functions；同时附带 Supabase 远程 MCP（默认只读）供 agent 查询表结构与执行查询。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "云服务",
+  "icon": "icon.svg",
+  "keywords": [
+    "supabase",
+    "postgres",
+    "database",
+    "migration",
+    "edge-functions",
+    "rls"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

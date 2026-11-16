@@ -1,0 +1,22 @@
+{
+  "name": "aws",
+  "displayName": "AWS",
+  "version": "0.1.0",
+  "description": "AWS 官方 MCP Server：查询 AWS 文档、区域可用性，并在沙箱中运行 Python 调用 AWS API。插件提供远程 MCP 配置与技能，负责 OAuth、最小权限与写操作确认",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "云服务",
+  "icon": "icon.svg",
+  "keywords": [
+    "aws",
+    "cloud",
+    "iam",
+    "s3",
+    "lambda",
+    "mcp",
+    "documentation"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

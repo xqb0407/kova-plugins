@@ -1,0 +1,22 @@
+{
+  "name": "google-workspace",
+  "displayName": "Google Workspace",
+  "version": "0.1.0",
+  "description": "Google Workspace 官方 MCP：连接 Gmail、Drive、Docs、Sheets、Calendar 与跨产品搜索。插件提供 MCP 配置与技能，负责 OAuth 前提、工具选择与写操作确认；需要 Workspace Developer Preview",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "办公",
+  "icon": "icon.svg",
+  "keywords": [
+    "google",
+    "gmail",
+    "drive",
+    "docs",
+    "sheets",
+    "calendar",
+    "mcp"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

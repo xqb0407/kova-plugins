@@ -1,0 +1,20 @@
+{
+  "name": "jira",
+  "displayName": "Jira",
+  "version": "0.1.0",
+  "description": "Jira（acli）：用 Atlassian 官方 CLI 检索和更新 work item、执行 JQL、查看 sprint 与字段、流转状态。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "jira",
+    "atlassian",
+    "acli",
+    "issue",
+    "sprint",
+    "jql"
+  ],
+  "skills": "skills"
+}

@@ -65,11 +65,11 @@ mcp({ action: "call", tool: "gitlab__mrs",
 | `project` | 单项目详情 | `project` |
 | `issues` | issue 列表（默认 opened） | `state`, `labels`, `assignee`（`@me`）, `search`, `limit` |
 | `issue` | issue 详情 + 评论 | `iid`, `includeNotes`, `notesLimit` |
-| `issue_comment` | 发 issue 评论（写） | `iid`, `body` |
+| `issue_comment` | 发 issue 评论（写，两段确认） | `iid`, `body`, `confirmToken?` |
 | `mrs` | MR 列表（默认 opened） | `state`, `author`/`reviewer`（`@me`）, `labels`, `search` |
 | `mr` | MR 详情 + 审批 + head pipeline | `iid`, `includeApprovals` |
 | `mr_diff` | 变更文件与 diff | `iid`, `file`, `includeDiff`, `maxFiles`, `maxLinesPerFile` |
-| `mr_comment` | 发 MR 总评论（写） | `iid`, `body` |
+| `mr_comment` | 发 MR 总评论（写，两段确认） | `iid`, `body`, `confirmToken?` |
 | `pipelines` | 流水线列表 / 指定流水线详情 + 作业 | `ref`, `status`, `pipelineId`, `jobLimit` |
 | `job_log` | 作业日志尾部 | `jobId`, `tailLines` |
 | `commits` | 最近提交 | `ref`, `since`, `until`, `path`, `limit` |
@@ -81,6 +81,10 @@ mcp({ action: "call", tool: "gitlab__mrs",
 
 - **URL/token 只认用户级来源**：工作区配置只能设 `defaultProject`。这是防 token
   外发的硬约束，不是可配置项。
+- **评论写入两段确认**（0.2.0，借鉴 email-workbench 的闸门链）：第一次调用只校验目标并返回
+  预览 + confirmToken（5 分钟有效，存 MCP 进程内存），用户看过预览同意后带同一令牌与
+  逐字相同参数再调一次才真正 POST。内容/目标变过、令牌过期或复用都会拒绝——把「发送前
+  给用户确认」从纪律变成机制。发送结果带新评论 `webUrl`，方便发后核对。
 - **错误可操作**：401/403/404/429 分别给出下一步（检查 token、scope、项目路径、
   Retry-After），并保留 GitLab 原始 `message`。
 - **结果有上限**：列表默认 20 条；diff 每个文件默认 200 行、最多 20 个文件；
@@ -88,6 +92,7 @@ mcp({ action: "call", tool: "gitlab__mrs",
 - **`@me` 解析**：作者/评审人过滤里写 `@me`，服务端先查 `/user` 再替换成用户名。
 - **每次调用重读配置**：改 token/url 不用重启 MCP 进程。
 - **diff 兼容**：优先 `/diffs`（新版本，分页），404 时回退 `/changes`（老版本）。
+- **job trace 清理**：日志里的 section 标记（`\x01/\x02[0K`）与 ANSI 色码在返回前剥掉。
 
 ## 限制
 
@@ -99,6 +104,10 @@ mcp({ action: "call", tool: "gitlab__mrs",
 ## 本地调试
 
 ```bash
+# 端到端（假 GitLab API，本地 HTTP fixture；覆盖评论两段确认全链路、令牌过期/
+# 篡改/复用拒绝、@me 解析、分页头、trace 清理、4 类错误文案等 24 项断言）
+node plugins/gitlab/mcp/test/run-tests.mjs
+
 # 直接调工具（绕过 JSON-RPC）
 bun -e 'import { TOOL_DEFS } from "./mcp/tools.ts";
 const t = TOOL_DEFS.find((x) => x.name === "status");

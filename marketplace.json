@@ -22,8 +22,8 @@
     {
       "name": "gitlab",
       "source": "./plugins/gitlab",
-      "version": "0.1.0",
-      "description": "GitLab 工作流：项目检索、issue 与评论、MR 详情与 diff、审批状态、CI 流水线与作业日志、最近提交。支持 gitlab.com 与自建实例；零依赖，token 只从用户级配置或 macOS 钥匙串读取",
+      "version": "0.2.0",
+      "description": "GitLab 工作流：项目检索、issue 与评论、MR 详情与 diff、审批状态、CI 流水线与作业日志、最近提交。评论写入走两段确认（预览 + confirmToken，内容绑定防篡改）。支持 gitlab.com 与自建实例；零依赖，token 只从用户级配置或 macOS 钥匙串读取",
       "category": "开发",
       "keywords": [
         "gitlab",
@@ -99,6 +99,397 @@
         "sheets",
         "univer",
         "spreadsheet"
+      ]
+    },
+    {
+      "name": "phone",
+      "source": "./plugins/phone",
+      "version": "0.2.0",
+      "description": "Android 手机控制（ADB）：截图、uiautomator 控件树、点击/长按/滑动、滚动查找、中英文文本输入（ADBKeyboard）、系统键、启动应用、等待界面变化、就绪自检；动作可带 observe 一步取回新界面。agent 走「看 → 操作 → 验证」闭环操作真机或模拟器；需本机安装 Android Platform Tools 并授权 USB 调试",
+      "category": "自动化",
+      "keywords": [
+        "android",
+        "adb",
+        "phone",
+        "mobile",
+        "automation",
+        "手机"
+      ]
+    },
+    {
+      "name": "wecom",
+      "source": "./plugins/wecom",
+      "version": "0.3.0",
+      "description": "企业微信（wecom-cli）：内置官方 wecom-unified 技能与 references，覆盖消息、通讯录、日程、会议、待办、文档、表格、微盘。技能负责 CLI 安装、扫码授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "协作",
+      "keywords": [
+        "wecom",
+        "wechat-work",
+        "企业微信",
+        "企微",
+        "cli",
+        "wecom-cli"
+      ]
+    },
+    {
+      "name": "dingtalk",
+      "source": "./plugins/dingtalk",
+      "version": "0.3.0",
+      "description": "钉钉（dws）：内置官方 16 个 dingtalk-* 技能，覆盖群聊消息、联系人、日历、待办、文档、AI 表格、邮件、会议纪要等。技能负责 CLI 安装、浏览器授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "协作",
+      "keywords": [
+        "dingtalk",
+        "钉钉",
+        "cli",
+        "dws",
+        "workspace-cli"
+      ]
+    },
+    {
+      "name": "feishu",
+      "source": "./plugins/feishu",
+      "version": "0.3.0",
+      "description": "飞书 / Lark（lark-cli）：内置官方 25 个 lark-* 技能，覆盖 IM、通讯录、云文档、多维表格、日历、任务、邮件、会议、审批等。技能负责 CLI 安装、OAuth 授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "协作",
+      "keywords": [
+        "feishu",
+        "lark",
+        "飞书",
+        "cli",
+        "lark-cli"
+      ]
+    },
+    {
+      "name": "github",
+      "source": "./plugins/github",
+      "version": "0.2.0",
+      "description": "GitHub（gh + 官方 MCP）：用官方 GitHub CLI 覆盖仓库、issue、PR 与 diff、评审与检查、Actions 运行与失败日志、release、代码搜索；同时附带 GitHub 远程 MCP（OAuth 或 PAT）供 agent 直接调用结构化工具。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "开发",
+      "keywords": [
+        "github",
+        "gh",
+        "pull-request",
+        "issue",
+        "actions",
+        "code-review"
+      ]
+    },
+    {
+      "name": "jira",
+      "source": "./plugins/jira",
+      "version": "0.1.0",
+      "description": "Jira（acli）：用 Atlassian 官方 CLI 检索和更新 work item、执行 JQL、查看 sprint 与字段、流转状态。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "开发",
+      "keywords": [
+        "jira",
+        "atlassian",
+        "acli",
+        "issue",
+        "sprint",
+        "jql"
+      ]
+    },
+    {
+      "name": "docker",
+      "source": "./plugins/docker",
+      "version": "0.1.0",
+      "description": "Docker（docker / docker compose）：用官方 CLI 构建镜像、启动与排查 Compose 服务、查看容器日志与配置、清理资源。技能负责环境检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "开发",
+      "keywords": [
+        "docker",
+        "compose",
+        "container",
+        "image",
+        "containerization"
+      ]
+    },
+    {
+      "name": "slack",
+      "source": "./plugins/slack",
+      "version": "0.1.0",
+      "description": "Slack（slack-cli）：用官方 Slack CLI 的 slack api 调用 Web API，覆盖频道、消息、用户、文件与表情回应。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "协作",
+      "keywords": [
+        "slack",
+        "slack-cli",
+        "chat",
+        "message",
+        "channel",
+        "web-api"
+      ]
+    },
+    {
+      "name": "notion",
+      "source": "./plugins/notion",
+      "version": "0.2.0",
+      "description": "Notion（ntn + 官方 MCP）：用官方 Notion CLI 读写页面、查询数据源、调用 Notion API 与管理 Workers；同时附带 Notion 远程 MCP（OAuth）供 agent 直接检索、读取与编辑页面。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "办公",
+      "keywords": [
+        "notion",
+        "ntn",
+        "wiki",
+        "database",
+        "page",
+        "docs"
+      ]
+    },
+    {
+      "name": "cloudflare",
+      "source": "./plugins/cloudflare",
+      "version": "0.2.0",
+      "description": "Cloudflare（wrangler + 官方 MCP）：用官方 Wrangler CLI 开发、部署和管理 Workers、Pages、D1、R2、KV 与密钥；同时附带 Cloudflare 远程 MCP（OAuth / API Token）供 agent 查询账户与资源。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "云服务",
+      "keywords": [
+        "cloudflare",
+        "wrangler",
+        "workers",
+        "pages",
+        "d1",
+        "r2",
+        "kv"
+      ]
+    },
+    {
+      "name": "vercel",
+      "source": "./plugins/vercel",
+      "version": "0.2.0",
+      "description": "Vercel（vercel + 官方 MCP）：用官方 Vercel CLI 部署预览与生产、查看部署与日志、管理环境变量、检查构建与提升部署；同时附带 Vercel 远程 MCP（OAuth，Beta）供 agent 查询项目与部署。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "云服务",
+      "keywords": [
+        "vercel",
+        "deploy",
+        "hosting",
+        "logs",
+        "env",
+        "preview"
+      ]
+    },
+    {
+      "name": "supabase",
+      "source": "./plugins/supabase",
+      "version": "0.2.0",
+      "description": "Supabase（supabase + 官方 MCP）：用官方 Supabase CLI 管理本地开发栈、数据库迁移、类型生成、secrets 与 Edge Functions；同时附带 Supabase 远程 MCP（默认只读）供 agent 查询表结构与执行查询。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "云服务",
+      "keywords": [
+        "supabase",
+        "postgres",
+        "database",
+        "migration",
+        "edge-functions",
+        "rls"
+      ]
+    },
+    {
+      "name": "kubernetes",
+      "source": "./plugins/kubernetes",
+      "version": "0.1.0",
+      "description": "Kubernetes（kubectl）：用官方 CLI 查询集群资源、排查 Pod 与事件、读取日志、执行命令、diff/apply 清单与回滚 Deployment。技能负责环境检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "云服务",
+      "keywords": [
+        "kubernetes",
+        "kubectl",
+        "k8s",
+        "cluster",
+        "pod",
+        "deployment"
+      ]
+    },
+    {
+      "name": "sentry",
+      "source": "./plugins/sentry",
+      "version": "0.2.0",
+      "description": "Sentry（sentry + 官方 MCP）：用官方 Sentry CLI 检索与解释 issue、查看事件和跨度、处理 feedback、下载 replay、列出 DSN 与发布版本；同时附带 Sentry 远程 MCP（OAuth）供 agent 直接排查异常。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "可观测",
+      "keywords": [
+        "sentry",
+        "errors",
+        "issue",
+        "tracing",
+        "replay",
+        "observability"
+      ]
+    },
+    {
+      "name": "datadog",
+      "source": "./plugins/datadog",
+      "version": "0.2.0",
+      "description": "Datadog（pup + 官方 MCP）：用官方 Datadog CLI 查询 monitors、日志、指标、trace、incident、SLO、合成测试与 CI 流水线；同时附带 Datadog 远程 MCP（OAuth）供 agent 直接查询可观测性数据。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "可观测",
+      "keywords": [
+        "datadog",
+        "pup",
+        "logs",
+        "metrics",
+        "monitors",
+        "apm",
+        "observability"
+      ]
+    },
+    {
+      "name": "stripe",
+      "source": "./plugins/stripe",
+      "version": "0.2.0",
+      "description": "Stripe（stripe + 官方 MCP）：用官方 Stripe CLI 转发和触发 webhook、查询与创建 API 资源、查看请求日志、管理客户与测试数据；同时附带 Stripe 远程 MCP（OAuth）供 agent 查询与操作 Stripe 资源。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "支付",
+      "keywords": [
+        "stripe",
+        "payment",
+        "webhook",
+        "subscription",
+        "billing",
+        "cli"
+      ]
+    },
+    {
+      "name": "ffmpeg",
+      "source": "./plugins/ffmpeg",
+      "version": "0.1.0",
+      "description": "FFmpeg（ffmpeg / ffprobe）：用官方二进制探测媒体信息、转码、剪辑、缩放、抽帧、提取音轨与查看进度。技能负责安装检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+      "category": "媒体",
+      "keywords": [
+        "ffmpeg",
+        "ffprobe",
+        "video",
+        "audio",
+        "transcode",
+        "media"
+      ]
+    },
+    {
+      "name": "google-workspace",
+      "source": "./plugins/google-workspace",
+      "version": "0.1.0",
+      "description": "Google Workspace 官方 MCP：连接 Gmail、Drive、Docs、Sheets、Calendar 与跨产品搜索。插件提供 MCP 配置与技能，负责 OAuth 前提、工具选择与写操作确认；需要 Workspace Developer Preview",
+      "category": "办公",
+      "keywords": [
+        "google",
+        "gmail",
+        "drive",
+        "docs",
+        "sheets",
+        "calendar",
+        "mcp"
+      ]
+    },
+    {
+      "name": "figma",
+      "source": "./plugins/figma",
+      "version": "0.1.0",
+      "description": "Figma 官方 Dev Mode MCP：读取当前画板的设计上下文、元数据、截图、变量与 Code Connect 映射。插件提供 MCP 配置与技能；只读设计稿，不修改画布",
+      "category": "设计",
+      "keywords": [
+        "figma",
+        "design",
+        "dev-mode",
+        "mcp",
+        "code-connect",
+        "ui"
+      ]
+    },
+    {
+      "name": "linear",
+      "source": "./plugins/linear",
+      "version": "0.1.0",
+      "description": "Linear 官方 MCP：检索和更新 issue、项目、团队、评论与 cycle。插件提供远程 MCP 配置与技能，负责 OAuth、只读端点和写操作确认",
+      "category": "开发",
+      "keywords": [
+        "linear",
+        "issue",
+        "project",
+        "cycle",
+        "mcp",
+        "roadmap"
+      ]
+    },
+    {
+      "name": "atlassian",
+      "source": "./plugins/atlassian",
+      "version": "0.1.0",
+      "description": "Atlassian 官方 Rovo MCP：检索 Jira issue、Confluence 页面与跨产品内容。插件提供远程 MCP 配置与技能，负责 OAuth、动态工具发现与写操作确认；仅支持 Atlassian Cloud",
+      "category": "办公",
+      "keywords": [
+        "atlassian",
+        "jira",
+        "confluence",
+        "rovo",
+        "mcp",
+        "wiki"
+      ]
+    },
+    {
+      "name": "playwright",
+      "source": "./plugins/playwright",
+      "version": "0.1.0",
+      "description": "Microsoft 官方 Playwright MCP：用无障碍快照操作真实浏览器，覆盖导航、点击、填表、截图、控制台与网络请求。插件提供 stdio MCP 配置与技能，负责隔离运行与副作用确认",
+      "category": "开发",
+      "keywords": [
+        "playwright",
+        "browser",
+        "e2e",
+        "automation",
+        "mcp",
+        "testing"
+      ]
+    },
+    {
+      "name": "chrome-devtools",
+      "source": "./plugins/chrome-devtools",
+      "version": "0.1.0",
+      "description": "Google 官方 Chrome DevTools MCP：调试网页的控制台、网络、性能 trace 与 Lighthouse。插件提供 stdio MCP 配置与技能，负责 Chrome 版本检查、隐私与只读排查约定",
+      "category": "开发",
+      "keywords": [
+        "chrome",
+        "devtools",
+        "performance",
+        "lighthouse",
+        "mcp",
+        "web"
+      ]
+    },
+    {
+      "name": "context7",
+      "source": "./plugins/context7",
+      "version": "0.1.0",
+      "description": "Upstash Context7 MCP：按库名解析 ID 并检索最新官方文档与代码示例。插件提供远程 MCP 配置与技能，匿名即可使用，可选 API key 提高配额；负责版本核对与提示注入防范",
+      "category": "开发",
+      "keywords": [
+        "context7",
+        "docs",
+        "library",
+        "mcp",
+        "upstash",
+        "reference"
+      ]
+    },
+    {
+      "name": "aws",
+      "source": "./plugins/aws",
+      "version": "0.1.0",
+      "description": "AWS 官方 MCP Server：查询 AWS 文档、区域可用性，并在沙箱中运行 Python 调用 AWS API。插件提供远程 MCP 配置与技能，负责 OAuth、最小权限与写操作确认",
+      "category": "云服务",
+      "keywords": [
+        "aws",
+        "cloud",
+        "iam",
+        "s3",
+        "lambda",
+        "mcp",
+        "documentation"
+      ]
+    },
+    {
+      "name": "azure",
+      "source": "./plugins/azure",
+      "version": "0.1.0",
+      "description": "Microsoft 官方 Azure MCP Server：查询订阅、资源组、存储、Key Vault、Monitor、Cosmos/SQL 与 AKS。插件提供 stdio MCP 配置与技能，复用 az login 凭证并约束高风险读取",
+      "category": "云服务",
+      "keywords": [
+        "azure",
+        "cloud",
+        "aks",
+        "key-vault",
+        "monitor",
+        "mcp"
       ]
     }
   ]

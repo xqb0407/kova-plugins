@@ -1,0 +1,21 @@
+{
+  "name": "figma",
+  "displayName": "Figma",
+  "version": "0.1.0",
+  "description": "Figma 官方 Dev Mode MCP：读取当前画板的设计上下文、元数据、截图、变量与 Code Connect 映射。插件提供 MCP 配置与技能；只读设计稿，不修改画布",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "设计",
+  "icon": "icon.svg",
+  "keywords": [
+    "figma",
+    "design",
+    "dev-mode",
+    "mcp",
+    "code-connect",
+    "ui"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

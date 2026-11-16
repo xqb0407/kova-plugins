@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "aws-mcp": {
+      "type": "http",
+      "url": "https://aws-mcp.us-east-1.api.aws/mcp",
+      "description": "AWS 官方 MCP Server（OAuth 2.1 / AWS Sign-in）"
+    }
+  }
+}

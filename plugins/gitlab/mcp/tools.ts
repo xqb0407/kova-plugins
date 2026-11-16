@@ -1,12 +1,18 @@
 /**
- * GitLab 工具实现层：13 个只读为主 + 2 个评论写入的工具，全部围绕 REST API v4。
+ * GitLab 工具实现层：11 个只读 + 2 个评论写入的工具，全部围绕 REST API v4。
  *
  * 设计取舍：
  * - 每次调用重新读配置：改 ~/.kova/gitlab.json 后不用重启 MCP 进程；
  * - 项目参数既接受数字 id 也接受 `group/sub/project`（自动 URL 编码）；
  * - `@me` 在作者/评审人过滤里解析成当前 token 用户；
- * - 所有列表都有 limit 与分页提示；diff / 日志按行截断，避免撑爆上下文。
+ * - 所有列表都有 limit 与分页提示；diff / 日志按行截断，避免撑爆上下文；
+ * - 评论写入走两段确认（参考 email-workbench 的闸门链）：
+ *   第一次调用只校验目标并返回预览 + confirmToken（5 分钟有效，绑定确切内容），
+ *   用户看过预览同意后，带同一个 confirmToken 和**逐字相同**的参数再次调用才真正发送；
+ *   内容或目标变过、令牌过期/复用都会拒绝并要求重新准备；
+ * - job 日志清理 GitLab trace 的 section 标记（\x01/\x02）与 ANSI 色码。
  */
+import { randomBytes } from "node:crypto";
 import { GitlabApiError, GitlabClient } from "./lib/client";
 import { loadConfig, SETUP_HINT } from "./lib/config";
 import { fmtCommit, fmtIssue, fmtJob, fmtMR, fmtNote, fmtPipeline, fmtProject } from "./lib/format";
@@ -68,6 +74,113 @@ function msg(err: unknown): string {
 function connect(): { cfg: ReturnType<typeof loadConfig>; api: GitlabClient } {
   const cfg = loadConfig();
   return { cfg, api: new GitlabClient(cfg) };
+}
+
+/* ------------------------------------------------------------------ */
+/* 评论写入的两段确认（prepare → 用户确认 → send）                       */
+/* ------------------------------------------------------------------ */
+
+type CommentKind = "issue" | "mr";
+
+type PendingComment = {
+  kind: CommentKind;
+  project: string;
+  iid: number;
+  body: string;
+  targetTitle: string;
+  targetUrl?: string;
+  expiresAt: number;
+};
+
+/** 令牌存 MCP 常驻进程内存：重启即失效，不可跨进程复用 */
+const pendingComments = new Map<string, PendingComment>();
+
+function confirmTtlMs(): number {
+  const raw = Number(process.env.GITLAB_CONFIRM_TTL_MS);
+  return Number.isFinite(raw) && raw >= 200 ? Math.floor(raw) : 5 * 60_000;
+}
+
+function prunePending(): void {
+  const now = Date.now();
+  for (const [token, entry] of pendingComments) {
+    if (entry.expiresAt < now) pendingComments.delete(token);
+  }
+}
+
+const PENDING_CAP = 50;
+
+function newConfirmToken(entry: Omit<PendingComment, "expiresAt">): { token: string; ttlMs: number } {
+  prunePending();
+  if (pendingComments.size >= PENDING_CAP) {
+    const oldest = pendingComments.keys().next().value;
+    if (oldest !== undefined) pendingComments.delete(oldest);
+  }
+  const ttlMs = confirmTtlMs();
+  const token = randomBytes(16).toString("hex");
+  pendingComments.set(token, { ...entry, expiresAt: Date.now() + ttlMs });
+  return { token, ttlMs };
+}
+
+/**
+ * 两段式评论流程。第一段（无 confirmToken）：校验目标存在、返回预览与新令牌，不发；
+ * 第二段（带 confirmToken）：令牌未过期且 kind/project/iid/body 与第一段逐字一致才发送。
+ */
+async function commentFlow(
+  args: Record<string, unknown>,
+  kind: CommentKind,
+  project: string,
+  iid: number,
+  body: string,
+  fetchTarget: () => Promise<{ title: string; webUrl?: string }>,
+  post: () => Promise<any>,
+): Promise<unknown> {
+  const confirmToken = str(args, "confirmToken");
+  if (!confirmToken) {
+    const target = await fetchTarget();
+    const { token, ttlMs } = newConfirmToken({ kind, project, iid, body, targetTitle: target.title, ...(target.webUrl ? { targetUrl: target.webUrl } : {}) });
+    return {
+      requiresConfirmation: true,
+      confirmToken: token,
+      expiresInMinutes: Math.max(1, Math.round(ttlMs / 60_000)),
+      preview: {
+        kind: kind === "issue" ? "issue 评论" : "MR 评论",
+        target: `#${iid} ${target.title}`,
+        ...(target.webUrl ? { webUrl: target.webUrl } : {}),
+        body,
+      },
+      hint: "还没发送。把 preview 给用户确认；同意后带同一个 confirmToken 和完全相同的参数再次调用本工具才会真正发送",
+    };
+  }
+
+  const entry = pendingComments.get(confirmToken);
+  pendingComments.delete(confirmToken);
+  if (!entry || entry.expiresAt < Date.now()) {
+    throw new Error(
+      "确认令牌无效或已过期（令牌 5 分钟有效、单次使用）。重新调用本工具（不带 confirmToken）生成新的预览与令牌",
+    );
+  }
+  const mismatch =
+    entry.kind !== kind || entry.project !== project || entry.iid !== iid || entry.body !== body;
+  if (mismatch) {
+    throw new Error(
+      "确认令牌与本次参数不一致（目标或评论内容相对预览被改过，令牌已作废）。重新调用本工具（不带 confirmToken）重新生成",
+    );
+  }
+  const note = await post();
+  return {
+    ok: true,
+    note: fmtNote(note),
+    ...(typeof note?.web_url === "string" ? { webUrl: note.web_url } : {}),
+    sentTo: `#${iid} ${entry.targetTitle}`,
+  };
+}
+
+/** 清理 GitLab job trace 的 section 标记（\x01/\x02 + [0K）与 ANSI 色码 */
+function cleanTrace(text: string): string {
+  return text
+    .replace(/\x1b\[[0-9;]*[A-Za-z]/g, "")
+    .replace(/[\x01\x02]\[0K/g, "")
+    .replace(/[\x01\x02]/g, "");
 }
 
 /* ------------------------------------------------------------------ */
@@ -180,8 +293,18 @@ const opIssueComment: ToolDef["run"] = async (args) => {
   const project = api.projectId(str(args, "project"));
   const iid = needInt(args.iid, "issue iid");
   const body = needStr(args, "body", "评论内容");
-  const r = await api.post<any>(`/projects/${project}/issues/${iid}/notes`, { body });
-  return { ok: true, note: fmtNote(r) };
+  return commentFlow(
+    args,
+    "issue",
+    project,
+    iid,
+    body,
+    async () => {
+      const r = await api.get<any>(`/projects/${project}/issues/${iid}`);
+      return { title: r.data?.title ?? `issue ${iid}`, ...(typeof r.data?.web_url === "string" ? { webUrl: r.data.web_url } : {}) };
+    },
+    () => api.post<any>(`/projects/${project}/issues/${iid}/notes`, { body }),
+  );
 };
 
 const opMrs: ToolDef["run"] = async (args) => {
@@ -303,8 +426,18 @@ const opMrComment: ToolDef["run"] = async (args) => {
   const project = api.projectId(str(args, "project"));
   const iid = needInt(args.iid, "MR iid");
   const body = needStr(args, "body", "评论内容");
-  const r = await api.post<any>(`/projects/${project}/merge_requests/${iid}/notes`, { body });
-  return { ok: true, note: fmtNote(r) };
+  return commentFlow(
+    args,
+    "mr",
+    project,
+    iid,
+    body,
+    async () => {
+      const r = await api.get<any>(`/projects/${project}/merge_requests/${iid}`);
+      return { title: r.data?.title ?? `MR ${iid}`, ...(typeof r.data?.web_url === "string" ? { webUrl: r.data.web_url } : {}) };
+    },
+    () => api.post<any>(`/projects/${project}/merge_requests/${iid}/notes`, { body }),
+  );
 };
 
 const opPipelines: ToolDef["run"] = async (args) => {
@@ -344,8 +477,9 @@ const opJobLog: ToolDef["run"] = async (args) => {
   const { api } = connect();
   const id = needInt(args.jobId, "jobId");
   const tailLines = clampInt(args.tailLines, 200, 1, 2000);
-  const text = await api.getText(`/jobs/${id}/trace`);
-  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const raw = await api.getText(`/jobs/${id}/trace`);
+  const text = cleanTrace(raw.replace(/\r\n/g, "\n"));
+  const lines = text.split("\n");
   const slice = lines.slice(-tailLines);
   return {
     jobId: id,
@@ -453,13 +587,16 @@ export const TOOL_DEFS: ToolDef[] = [
   {
     name: "issue_comment",
     description:
-      "在 issue 下发评论（写操作，需要 api scope）。发送前先把内容给用户确认；成功后返回评论元数据。",
+      "在 issue 下发评论（写操作，需要 api scope）。两段确认：第一次调用（不带 confirmToken）只校验目标并返回" +
+      "预览 + confirmToken（5 分钟有效），把预览给用户确认；同意后带同一个 confirmToken 和逐字相同的参数再次调用才真正发送。" +
+      "内容/目标变过、令牌过期或复用都会拒绝。行内评论暂不支持。",
     inputSchema: {
       type: "object",
       properties: {
         project: PROJECT_SCHEMA,
         iid: { type: "number", description: "issue 序号" },
         body: { type: "string", description: "评论正文（Markdown）" },
+        confirmToken: { type: "string", description: "第一次调用返回的确认令牌；不带时只返回预览不发送" },
       },
       required: ["iid", "body"],
     },
@@ -524,13 +661,16 @@ export const TOOL_DEFS: ToolDef[] = [
   },
   {
     name: "mr_comment",
-    description: "在 MR 下发评论（写操作，需要 api scope）。发送前先把内容给用户确认；行内评论暂不支持。",
+    description:
+      "在 MR 下发总评论（写操作，需要 api scope）。两段确认：第一次调用（不带 confirmToken）只返回预览 + confirmToken，" +
+      "用户确认后带同一令牌与逐字相同参数再调一次才发送。行内评论暂不支持。",
     inputSchema: {
       type: "object",
       properties: {
         project: PROJECT_SCHEMA,
         iid: { type: "number", description: "MR 序号" },
         body: { type: "string", description: "评论正文（Markdown）" },
+        confirmToken: { type: "string", description: "第一次调用返回的确认令牌；不带时只返回预览不发送" },
       },
       required: ["iid", "body"],
     },

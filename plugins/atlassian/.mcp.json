@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "atlassian-mcp": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "description": "Atlassian Rovo 官方 MCP（OAuth 2.1）"
+    }
+  }
+}

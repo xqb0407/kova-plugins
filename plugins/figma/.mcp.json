@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "figma-mcp": {
+      "type": "http",
+      "url": "http://127.0.0.1:3845/mcp",
+      "description": "Figma Dev Mode 本地 MCP（Figma Desktop 需保持打开）"
+    }
+  }
+}

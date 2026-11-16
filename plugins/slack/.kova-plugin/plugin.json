@@ -1,0 +1,20 @@
+{
+  "name": "slack",
+  "displayName": "Slack",
+  "version": "0.1.0",
+  "description": "Slack（slack-cli）：用官方 Slack CLI 的 slack api 调用 Web API，覆盖频道、消息、用户、文件与表情回应。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "协作",
+  "icon": "icon.svg",
+  "keywords": [
+    "slack",
+    "slack-cli",
+    "chat",
+    "message",
+    "channel",
+    "web-api"
+  ],
+  "skills": "skills"
+}

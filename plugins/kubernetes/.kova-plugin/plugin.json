@@ -1,0 +1,20 @@
+{
+  "name": "kubernetes",
+  "displayName": "Kubernetes",
+  "version": "0.1.0",
+  "description": "Kubernetes（kubectl）：用官方 CLI 查询集群资源、排查 Pod 与事件、读取日志、执行命令、diff/apply 清单与回滚 Deployment。技能负责环境检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "云服务",
+  "icon": "icon.svg",
+  "keywords": [
+    "kubernetes",
+    "kubectl",
+    "k8s",
+    "cluster",
+    "pod",
+    "deployment"
+  ],
+  "skills": "skills"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "linear",
+  "displayName": "Linear",
+  "version": "0.1.0",
+  "description": "Linear 官方 MCP：检索和更新 issue、项目、团队、评论与 cycle。插件提供远程 MCP 配置与技能，负责 OAuth、只读端点和写操作确认",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "linear",
+    "issue",
+    "project",
+    "cycle",
+    "mcp",
+    "roadmap"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "wecom",
+  "displayName": "企业微信",
+  "version": "0.3.0",
+  "description": "企业微信（wecom-cli）：内置官方 wecom-unified 技能与 references，覆盖消息、通讯录、日程、会议、待办、文档、表格、微盘。技能负责 CLI 安装、扫码授权与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "协作",
+  "icon": "icon.svg",
+  "keywords": [
+    "wecom",
+    "wechat-work",
+    "企业微信",
+    "企微",
+    "cli",
+    "wecom-cli"
+  ],
+  "skills": "skills"
+}

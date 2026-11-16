@@ -1,5 +1,6 @@
 {
   "name": "rea",
+  "displayName": "REA 逆向分析",
   "version": "0.1.1",
   "description": "REA 逆向分析：静态分析本机二进制（Mach-O / PE / ELF）——格式与哈希、段表与熵、导入导出、字符串与 IOC 分类、字节搜索、分块熵图、反汇编。零外部依赖，agent 驱动，结论落 .rea.json + Markdown 报告",
   "author": {

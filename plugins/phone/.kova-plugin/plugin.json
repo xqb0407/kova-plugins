@@ -1,0 +1,12 @@
+{
+  "name": "phone",
+  "displayName": "手机操作",
+  "version": "0.2.0",
+  "description": "手机操作（Android / ADB）：截图、UI 控件树、点击/长按/滑动、滚动查找、文本输入（中文走 ADBKeyboard）、按键、启动应用、等待界面变化、就绪自检。动作可带 observe 一步取回新界面，agent 用「截图 → 控件树 → 操作 → 再截图」的闭环操作真机或模拟器",
+  "author": { "name": "Kova" },
+  "category": "自动化",
+  "icon": "icon.svg",
+  "keywords": ["android", "adb", "phone", "mobile", "automation", "手机"],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

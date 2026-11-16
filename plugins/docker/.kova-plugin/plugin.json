@@ -1,0 +1,19 @@
+{
+  "name": "docker",
+  "displayName": "Docker",
+  "version": "0.1.0",
+  "description": "Docker（docker / docker compose）：用官方 CLI 构建镜像、启动与排查 Compose 服务、查看容器日志与配置、清理资源。技能负责环境检查与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "docker",
+    "compose",
+    "container",
+    "image",
+    "containerization"
+  ],
+  "skills": "skills"
+}

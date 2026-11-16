@@ -64,7 +64,8 @@ gitlab__issue({ project, iid: 17 })          # 详情 + 评论
 gitlab__issue_comment({ project, iid: 17, body: "…" })
 ```
 
-评论前先把正文给用户确认。引用 issue 时带 `#17` 和网页链接。
+评论前先把正文给用户确认（工具本身就是两段的：先拿 preview，用户同意再带 confirmToken 发）。
+引用 issue 时带 `#17` 和网页链接。
 
 ### 3. MR 评审（核心场景）
 
@@ -101,7 +102,7 @@ gitlab__pipelines({ project, pipelineId: 123456 })           # 失败时看作�
 
 - 位置写 `文件:行`（从 diff 的 hunk 头读行号），**不要编造行号**；
 - 区分「阻塞项」与「建议」；不确定的写「未验证」；
-- 行内评论暂不支持，只能发 MR 总评论；发之前把正文给用户确认。
+- 行内评论暂不支持，只能发 MR 总评论；两段确认流程同 issue 评论（先拿 preview，用户同意再带 confirmToken 发）。
 
 ### 4. CI 排障
 
@@ -123,8 +124,11 @@ gitlab__commits({ project, path: "src/billing/" })
 
 ## 写操作规则
 
-- 只有 `issue_comment` / `mr_comment` 两个写工具；它们需要 `api` scope。
-- 发送前必须让用户看过最终正文；用户说“直接发”才发。
+- 只有 `issue_comment` / `mr_comment` 两个写工具；它们需要 `api` scope，且都是**两段确认**：
+  1. 第一次调用（不带 `confirmToken`）**不会发送**——返回 `preview`（目标 issue/MR 的标题、网页链接、评论全文）和 `confirmToken`（5 分钟有效）；
+  2. 把 preview 原样给用户看；用户同意后，带**同一个 confirmToken** 和**逐字相同**的参数再调一次，才真正发送；
+  3. 内容或目标相对预览被改过、令牌过期、令牌复用，工具都会拒绝并要求重新准备——不要试图绕过，改了内容就重新走第一段。
+- 发送成功的结果里有 `webUrl`，回答里带上让用户能直接点开核对（发后验证）。
 - 评论用 Markdown，引用代码用行内代码或代码块，别贴整份 diff。
 - 失败（403/404/429）时把错误原样告诉用户，不要重试写操作。
 
@@ -147,3 +151,5 @@ gitlab__commits({ project, path: "src/billing/" })
 | TLS 证书错误（自建实例） | 内部 CA / 自签证书 | 配置里加 `"caFile": "/path/ca.pem"`；明确知道风险时才用 `"insecureTls": true` |
 | 工具表里没有 `gitlab_*` | MCP 工具经 `mcp` 网关调用 | 用全名 `gitlab__status`；先 `mcp({action:"status"})` 确认已连接 |
 | `search` 搜不到工具 | 首次连接前无索引 | 直接按全名 call（调用时建立连接） |
+| 「确认令牌无效或已过期」 | 令牌 5 分钟有效、单次使用 | 重新调用（不带 confirmToken）拿新预览，用户再确认一次 |
+| 「确认令牌与本次参数不一致」 | 发送时的参数相对预览被改过 | 改了内容就必须重新走第一段，别复用旧令牌 |

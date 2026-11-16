@@ -1,0 +1,21 @@
+{
+  "name": "github",
+  "displayName": "GitHub",
+  "version": "0.2.0",
+  "description": "GitHub（gh + 官方 MCP）：用官方 GitHub CLI 覆盖仓库、issue、PR 与 diff、评审与检查、Actions 运行与失败日志、release、代码搜索；同时附带 GitHub 远程 MCP（OAuth 或 PAT）供 agent 直接调用结构化工具。技能负责安装、登录与命令发现，不内置 HTTP 客户端，也不保存凭据",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "github",
+    "gh",
+    "pull-request",
+    "issue",
+    "actions",
+    "code-review"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

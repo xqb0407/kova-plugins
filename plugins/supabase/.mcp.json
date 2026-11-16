@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "supabase-mcp": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?read_only=true",
+      "description": "supabase 官方远程 MCP"
+    }
+  }
+}

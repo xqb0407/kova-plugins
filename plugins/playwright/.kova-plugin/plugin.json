@@ -1,0 +1,21 @@
+{
+  "name": "playwright",
+  "displayName": "Playwright",
+  "version": "0.1.0",
+  "description": "Microsoft 官方 Playwright MCP：用无障碍快照操作真实浏览器，覆盖导航、点击、填表、截图、控制台与网络请求。插件提供 stdio MCP 配置与技能，负责隔离运行与副作用确认",
+  "author": {
+    "name": "Kova"
+  },
+  "category": "开发",
+  "icon": "icon.svg",
+  "keywords": [
+    "playwright",
+    "browser",
+    "e2e",
+    "automation",
+    "mcp",
+    "testing"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}

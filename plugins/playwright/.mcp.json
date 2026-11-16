@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "playwright-mcp": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": [
+        "x",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated",
+        "--browser",
+        "chrome"
+      ],
+      "description": "Microsoft Playwright MCP（headless + 隔离 profile）"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "chrome-devtools-mcp": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": [
+        "x",
+        "chrome-devtools-mcp@latest",
+        "--headless=true",
+        "--isolated=true"
+      ],
+      "description": "Google Chrome DevTools MCP（headless + 隔离 profile）"
+    }
+  }
+}
