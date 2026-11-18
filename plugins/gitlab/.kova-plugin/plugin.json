@@ -2,7 +2,7 @@
   "name": "gitlab",
   "displayName": "GitLab",
   "version": "0.2.0",
-  "description": "GitLab 工作流：项目检索、issue 与评论、MR 详情与 diff、审批状态、CI 流水线与作业日志、最近提交。支持 gitlab.com 与自建实例；零依赖，token 只从用户级配置或 macOS 钥匙串读取",
+  "description": "GitLab 工作流：项目检索、issue 与评论、MR 详情与 diff、审批状态、CI 流水线与作业日志、最近提交。支持 gitlab.com 与自建实例；装后配置自动注入，token 走平台密钥库（旧的 ~/.kova/gitlab.json 与 GITLAB_* 环境变量仍然兼容）",
   "author": {
     "name": "Kova"
   },
@@ -17,5 +17,23 @@
     "pipeline"
   ],
   "skills": "skills",
-  "mcpServers": ".mcp.json"
+  "mcpServers": ".mcp.json",
+  "config": [
+    {
+      "key": "url",
+      "title": "GitLab 地址",
+      "type": "string",
+      "default": "https://gitlab.com",
+      "env": "GITLAB_URL",
+      "description": "自建实例填根地址（如 https://gitlab.example.com）；留空用官方 gitlab.com"
+    },
+    {
+      "key": "token",
+      "title": "Personal Access Token",
+      "type": "secret",
+      "required": true,
+      "env": "GITLAB_TOKEN",
+      "description": "GitLab → Preferences → Access Tokens 创建，勾选 api / read_api；值存平台密钥库，不落配置文件"
+    }
+  ]
 }
