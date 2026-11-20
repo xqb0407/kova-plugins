@@ -75,6 +75,8 @@ export function useCanvas() {
   const [sel, setSel] = useState<Sel | null>(null);
   const [conflict, setConflict] = useState<{ json: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /** 最近一次外部（agent）落盘带来的新增元素 id：面板据此自动跟随视口（seq 递增去重触发） */
+  const [lastExternal, setLastExternal] = useState<{ addedIds: string[]; seq: number }>({ addedIds: [], seq: 0 });
   /** 绑定的文档在盘上但解析失败：编辑器顶部持久横幅（4 秒 toast 会被错过，只剩"空画布"像插件坏了） */
   const [docCorrupt, setDocCorrupt] = useState(false);
 
@@ -196,8 +198,12 @@ export function useCanvas() {
         if (localDirty) {
           setConflict({ json });
         } else {
+          // 记下外部新增的元素 id（agent 分批落盘的"这一批"），画布层据此自动跟随视口
+          const before = new Set(docRef.current.objects.map((o) => o.id));
+          const addedIds = parsed.objects.filter((o) => !before.has(o.id)).map((o) => o.id);
           applyDoc(parsed, { freshReset: true });
           sendSoon(parsed);
+          if (addedIds.length > 0) setLastExternal((prev) => ({ addedIds, seq: prev.seq + 1 }));
         }
       },
       onSaved: () => {
@@ -218,8 +224,12 @@ export function useCanvas() {
         try {
           const parsed = parseDoc(JSON.parse(conflict.json));
           if (parsed) {
+            // 与外部更新同款：记下新增元素，画布层据此自动跟随（冲突弹框文案承诺过）
+            const before = new Set(docRef.current.objects.map((o) => o.id));
+            const addedIds = parsed.objects.filter((o) => !before.has(o.id)).map((o) => o.id);
             applyDoc(parsed, { freshReset: true });
             sendSoon(parsed);
+            if (addedIds.length > 0) setLastExternal((prev) => ({ addedIds, seq: prev.seq + 1 }));
           }
         } catch {
           notifyLater("外部内容解析失败");
@@ -445,6 +455,23 @@ export function useCanvas() {
     [mutateSelected, sel],
   );
 
+  /** z 序单元素步进（图层树行内 ↑↓ 用；不依赖当前选中） */
+  const reorderZ = useCallback(
+    (elId: string, dir: "up" | "down") => {
+      const els = docRef.current.objects;
+      const idx = els.findIndex((e) => e.id === elId);
+      if (idx < 0) return;
+      const to = dir === "up" ? Math.min(idx + 1, els.length - 1) : Math.max(idx - 1, 0);
+      if (to === idx) return;
+      const copy = [...els];
+      const [it] = copy.splice(idx, 1);
+      copy.splice(to, 0, it);
+      const next = mapContainer(CANVAS_ROOT, () => copy);
+      if (next) commit(next);
+    },
+    [mapContainer, commit],
+  );
+
   /** 复制选中元素到应用内剪贴板 */
   const copySelected = useCallback(() => {
     if (!sel || sel.elIds.length === 0) return;
@@ -569,6 +596,7 @@ export function useCanvas() {
     sel,
     setSel,
     defaultContainerId,
+    lastExternal,
     conflict,
     resolveConflict,
     notice,
@@ -587,6 +615,7 @@ export function useCanvas() {
     alignSelected,
     distributeSelected,
     moveSelectedZ,
+    reorderZ,
     copySelected,
     cutSelected,
     pasteClipboard,

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "canvas": {
+      "type": "stdio",
+      "command": "${BUN}",
+      "args": ["run", "${PLUGIN_ROOT}/mcp/server.ts"],
+      "env": { "KOVA_WORKSPACE": "${WORKSPACE}" },
+      "description": "无限画布控制面：读写 *.canvas.json —— 建档 / 读档（元素摘要）/ patch_canvas 增删改调层 / 整档 write / watch_doc 长轮询跟随面板编辑（与面板同一套文档模型，改动落盘即上屏）"
+    }
+  }
+}

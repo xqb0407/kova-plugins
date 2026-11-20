@@ -61,8 +61,8 @@
     {
       "name": "canvas",
       "source": "./plugins/canvas",
-      "version": "0.1.0",
-      "description": "无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG",
+      "version": "0.2.0",
+      "description": "无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG；agent 经 canvas MCP 直接控制画布（建档/读档/patch/长轮询），落盘新内容面板自动跟随",
       "category": "效率",
       "keywords": [
         "canvas",

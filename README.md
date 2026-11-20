@@ -45,7 +45,7 @@
 | `context7` | MCP + 技能 | Context7 MCP：按库名解析 ID 并检索最新官方文档与代码示例；匿名可用，可选 API key 提高配额 |
 | `aws` | MCP + 技能 | AWS 官方 MCP：查询 AWS 文档与区域可用性，并在沙箱中调用 AWS API；OAuth 2.1 |
 | `azure` | MCP + 技能 | Azure 官方 MCP：订阅、资源组、存储、Key Vault、Monitor、Cosmos/SQL 与 AKS；复用 `az login` 凭证 |
-| `canvas` | 技能 + 面板 | 无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG；agent 以 `*.canvas.json` 文档协作 |
+| `canvas` | 技能 + 面板 + MCP | 无限画布工作台：Excalidraw 式无限空间，文本/形状/图片/Mermaid/表格/图表/网页嵌入自由摆放，整画布导出 SVG；agent 经 canvas MCP 直接控制画布（建档/读档/patch/长轮询），落盘新内容面板自动跟随视口 |
 | `office` | 技能 + 面板 + MCP | 办公套件工作台：幻灯片（逐页编辑、放映、导出 pptx/pdf/svg/html）+ 表格（Univer）+ 文档；agent 以 `.deck.canvas.json` / `.sheet.univer.json` / `.doc.univer.json` 协作 |
 | `ui-design` | 技能 + 面板 + MCP | Figma 式 UI 设计工作台：页面/画板/图层树 + 完整属性检视，独立 `*.uidesign.json` 文档；自带 MCP 工具，agent 可直接控制画布 |
 | `demo-skill` | 技能 | 最小技能型示例（周报整理），用于对照格式，可删 |

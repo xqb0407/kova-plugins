@@ -43,6 +43,7 @@ import {
   type TextEl,
 } from "./doc";
 import { newEl } from "./editor/newEl";
+import { MiniMap } from "./editor/MiniMap";
 import { ChartEditor } from "./editor/ChartEditor";
 import { TableEditor } from "./editor/TableEditor";
 import {
@@ -235,6 +236,10 @@ export type ZoomApi = {
   zoomTo: (s: number) => void;
   /** 当前视口中心的画布坐标：插入元素落这里 */
   viewportCenter: () => { x: number; y: number };
+  /** 当前视口的画布坐标矩形（图层树定位/小地图/agent 跟随判定共用） */
+  viewportRect: () => Box;
+  /** 把视口对准一个内容盒（缺省动画）；scale = min(maxScale, 适配盒)，不越界 */
+  fitBox: (box: Box, opts?: { maxScale?: number; animate?: boolean }) => void;
 };
 
 export const CanvasStage: FC<{
@@ -256,8 +261,14 @@ export const CanvasStage: FC<{
   annotateTargetId?: string | null;
   /** 绑定文档标识（workspace 相对路径）：变化即"换档"，重适配视口 */
   refitKey?: string | null;
+  /** 点阵网格背景（ViewSettings 开关） */
+  showGrid?: boolean;
+  /** agent 落盘新内容时视口自动跟随（ViewSettings 开关） */
+  followExternal?: boolean;
+  /** 右下小地图（ViewSettings 开关） */
+  showMinimap?: boolean;
   ref?: Ref<HTMLDivElement>;
-}> = ({ store, editingId, setEditingId, zoomApi, onZoom, onContextHit, penMode, drawTool, handMode, annotateTargetId, refitKey, onDrawDone, ref }) => {
+}> = ({ store, editingId, setEditingId, zoomApi, onZoom, onContextHit, penMode, drawTool, handMode, annotateTargetId, refitKey, onDrawDone, showGrid = false, followExternal = false, showMinimap = false, ref }) => {
   const { doc, sel, setSel, updateEl, setContainerElements, insertImageFromFile } = store;
   const hostRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>({ s: 1, tx: 0, ty: 0 });
@@ -372,6 +383,68 @@ export const CanvasStage: FC<{
     });
   }, [hostWH, layout]);
 
+  /* ---------- 视口动画与内容盒定位（图层树定位 / agent 跟随共用） ---------- */
+
+  /** 进行中的视口动画：任何用户交互（拖拽/滚轮/程序化 fit）先行取消 */
+  const tweenRef = useRef(0);
+  const cancelTween = useCallback(() => {
+    if (tweenRef.current) {
+      cancelAnimationFrame(tweenRef.current);
+      tweenRef.current = 0;
+    }
+  }, []);
+
+  /** rAF 缓动到目标视口（easeInOutCubic，~300ms）；拖拽中调用方负责先 cancel */
+  const animateTo = useCallback(
+    (target: View, ms = 300) => {
+      cancelTween();
+      const from = viewRef.current;
+      const t0 = performance.now();
+      const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+      const step = (now: number) => {
+        const t = Math.min(1, (now - t0) / ms);
+        const k = ease(t);
+        setView({
+          s: from.s + (target.s - from.s) * k,
+          tx: from.tx + (target.tx - from.tx) * k,
+          ty: from.ty + (target.ty - from.ty) * k,
+        });
+        tweenRef.current = t < 1 ? requestAnimationFrame(step) : 0;
+      };
+      tweenRef.current = requestAnimationFrame(step);
+    },
+    [cancelTween],
+  );
+
+  // 卸载清理：进行中的视口动画不再触碰已卸载的 setState
+  useEffect(() => cancelTween, [cancelTween]);
+
+  /** 把视口对准内容盒：scale = min(maxScale, 适配盒的 scale)，居中；缺省动画 */
+  const fitBox = useCallback(
+    (box: Box, opts?: { maxScale?: number; animate?: boolean }) => {
+      const { w, h } = hostWH();
+      const s = Math.min(
+        MAX_ZOOM,
+        Math.max(
+          MIN_ZOOM,
+          Math.min(opts?.maxScale ?? 1, (w - 80) / Math.max(box.w, 1), (h - 80) / Math.max(box.h, 1)),
+        ),
+      );
+      const target: View = {
+        s,
+        tx: w / 2 - (box.x + box.w / 2) * s,
+        ty: h / 2 - (box.y + box.h / 2) * s,
+      };
+      if (opts?.animate === false) {
+        cancelTween();
+        setView(target);
+      } else {
+        animateTo(target);
+      }
+    },
+    [hostWH, animateTo, cancelTween],
+  );
+
   /** 打开文档后一次性适配全部（等 ResizeObserver 量到真实容器再算） */
   const didFitRef = useRef(false);
   useEffect(() => {
@@ -443,13 +516,62 @@ export const CanvasStage: FC<{
         const vv = viewRef.current;
         return { x: (w / 2 - vv.tx) / vv.s, y: (h / 2 - vv.ty) / vv.s };
       },
+      viewportRect: () => {
+        const { w, h } = hostWH();
+        const vv = viewRef.current;
+        return { x: -vv.tx / vv.s, y: -vv.ty / vv.s, w: w / vv.s, h: h / vv.s };
+      },
+      fitBox,
     };
-  }, [fitAll, hostWH, zoomApi]);
+  }, [fitAll, hostWH, zoomApi, fitBox]);
 
   useEffect(() => onZoom(view.s), [view.s, onZoom]);
 
+  /* ---------- agent 落盘新内容自动跟随（ViewSettings 可关） ---------- */
+
+  /**
+   * state 层在外部 doc.open 应用后把"这一批新增元素 id"放到 store.lastExternal（seq 递增）。
+   * 这里求新增并盒，若不在当前视口内（留 40px 边距）就动画移过去：scale 不超过当前值
+   * ——只平移/缩小到能看见，不让远处小元素把视口拽得过近。拖拽中/就地编辑中不抢焦点。
+   */
+  const followSeqRef = useRef(0);
+  useEffect(() => {
+    const ext = store.lastExternal;
+    if (!ext || ext.seq === followSeqRef.current) return;
+    followSeqRef.current = ext.seq;
+    if (!followExternal || ext.addedIds.length === 0) return;
+    if (dragRef.current || editingId) return;
+    const addedSet = new Set(ext.addedIds);
+    const added = store.docRef.current.objects.filter((o) => addedSet.has(o.id));
+    if (added.length === 0) return;
+    const box = unionBox(added.map(boxOf));
+    if (!box) return;
+    const vp = zoomApi.current?.viewportRect();
+    if (!vp) return;
+    const margin = 40;
+    const fullyVisible =
+      box.x >= vp.x + margin &&
+      box.y >= vp.y + margin &&
+      box.x + box.w <= vp.x + vp.w - margin &&
+      box.y + box.h <= vp.y + vp.h - margin;
+    if (fullyVisible) return;
+    fitBox(box, { maxScale: Math.max(viewRef.current.s, MIN_ZOOM) });
+  }, [store.lastExternal, store.docRef, followExternal, editingId, fitBox, zoomApi]);
+
+  /** 小地图拖拽：把 (x,y) 画布点置于视口中心（保持当前缩放） */
+  const panTo = useCallback(
+    (x: number, y: number) => {
+      cancelTween(); // 拖动视口框时打断进行中的跟随/定位动画，避免两边抢视口
+      const { w, h } = hostWH();
+      const s = viewRef.current.s;
+      setView({ s, tx: w / 2 - x * s, ty: h / 2 - y * s });
+    },
+    [hostWH, cancelTween],
+  );
+
   /** 锚点缩放：s'=clamp(s·k); t' = p - (p - t)·(s'/s) */
   function zoomAt(px: number, py: number, k: number) {
+    cancelTween();
     fitIntentRef.current = null; // 用户缩放：程序化适配意图失效
     setView((v) => {
       const s = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.s * k));
@@ -638,6 +760,7 @@ export const CanvasStage: FC<{
   const onStagePointerDown = (e: ReactPointerEvent) => {
     // 右键：画线工具激活时＝起线动作（走下方 draw 分支）；其余情况仍一律走上下文菜单
     if (e.button === 2 && !(drawTool && !penMode && !editingId)) return;
+    cancelTween(); // 用户交互打断进行中的视口动画（跟随/定位）
     downSelRef.current = null; // 每帧指针落点只对本帧有效（onUp 零位移才消费）
     // editor 轨：点选/元素拖动/框选全在 canvas 内由 editor 处理；stage 只保留
     // 编辑收尾、平移（空格/抓手/中键）与笔/画线这些 editor 不碰的分支。
@@ -1233,6 +1356,7 @@ export const CanvasStage: FC<{
       if (e.ctrlKey || e.metaKey) {
         zoomAt(px, py, Math.exp(-e.deltaY * 0.0015));
       } else if (Math.abs(e.deltaX) > 0 || Math.abs(e.deltaY) > 0) {
+        cancelTween();
         fitIntentRef.current = null; // 用户平移：程序化适配意图失效
         setView((v) => ({ ...v, tx: v.tx - e.deltaX, ty: v.ty - e.deltaY }));
       }
@@ -1490,6 +1614,10 @@ export const CanvasStage: FC<{
     else if (ref) (ref as { current: HTMLDivElement | null }).current = node;
   };
 
+  // 点阵网格：间距跟缩放（24 画布单位一格），偏移跟平移；间距 <12px（缩太远）自动隐藏
+  const gridStep = Math.max(8, Math.round(24 * v.s));
+  const gridOpacity = gridStep < 12 ? 0 : Math.min(0.4, 0.1 + v.s * 0.22);
+
   return (
     <div
       ref={setHost}
@@ -1503,7 +1631,7 @@ export const CanvasStage: FC<{
         .join(" ")}
       style={{
         cursor: dragRef.current?.mode === "pan" ? "grabbing" : spaceCursor || handMode ? "grab" : penMode || drawTool ? "crosshair" : "default",
-        // 纯色画布底：不设点阵背景（用户偏好：不要点点），背景色由 .sc-stage 提供
+        // 纯色画布底；点阵网格是独立屏幕层（见下，ViewSettings 可开关）
       }}
       onPointerDown={onStagePointerDown}
       onDoubleClick={onDoubleClick}
@@ -1511,6 +1639,19 @@ export const CanvasStage: FC<{
       onMouseMove={onStageHoverMove}
       onMouseLeave={() => setHoveredId(null)}
     >
+      {/* 点阵网格背景：屏幕层铺点阵，间距/偏移跟随视口；纯展示不进导出 */}
+      {showGrid && gridOpacity > 0 && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "radial-gradient(circle, var(--foreground) 1px, transparent 1px)",
+            backgroundSize: `${gridStep}px ${gridStep}px`,
+            backgroundPosition: `${v.tx}px ${v.ty}px`,
+            opacity: gridOpacity,
+          }}
+        />
+      )}
       {/* 内容层双轨：dom = CSS transform 里的 DOM 元素；leafer = canvas 场景 +
           钢笔实时笔画仍走 DOM svg（画布坐标，变换层里直描） */}
       {renderer === "leafer" ? (
@@ -1818,6 +1959,8 @@ export const CanvasStage: FC<{
         )}
       </div>
       {dropHint && <div className="sc-drophint">松开以添加图片（自动落盘到资产目录）</div>}
+      {/* 小地图导航（ViewSettings 开关；空画布自动隐藏） */}
+      {showMinimap && <MiniMap doc={doc} view={v} hostSize={hostSize} onPanTo={panTo} />}
     </div>
   );
 };

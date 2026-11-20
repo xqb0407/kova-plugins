@@ -11,6 +11,7 @@ import {
   DownloadIcon,
   HelpCircleIcon,
   ImagePlusIcon,
+  LayersIcon,
   MaximizeIcon,
   MinusIcon,
   PlusIcon,
@@ -41,6 +42,8 @@ import { useEditorShell } from "./editor/useEditorShell";
 import { BoardToolbar } from "./editor/BoardToolbar";
 import { QuickEditComposer } from "./editor/QuickEditComposer";
 import { CanvasContextMenu } from "./editor/CanvasContextMenu";
+import { LayersPanel } from "./editor/LayersPanel";
+import { useViewFlags, ViewSettings } from "./editor/ViewSettings";
 import { Inspector } from "./editor/inspector";
 
 /* ---------------- 外壳 ---------------- */
@@ -86,6 +89,10 @@ export const App: FC = () => {
   } = useEditorShell();
   const { doc, sel } = store;
   const selected = !!sel && sel.elIds.length > 0;
+
+  /* ---------- 视图开关（网格/跟随/小地图）与图层树 ---------- */
+  const [viewFlags, setViewFlag] = useViewFlags();
+  const [layersOpen, setLayersOpen] = useState(false);
 
   /* ---------- 进入逻辑：打开即画（若无绑定文档，自动新建一张空白画布，
       不再停首页等「新建」——对齐稿定 AI 画布；首页仅作为「全部画布」呼出）---------- */
@@ -255,6 +262,9 @@ export const App: FC = () => {
                   annotateTargetId={annotate ? annotateTargetId : null}
                   onDrawDone={() => setDrawTool(null)}
                   refitKey={store.fileRel}
+                  showGrid={viewFlags.grid}
+                  followExternal={viewFlags.follow}
+                  showMinimap={viewFlags.minimap}
                 />
               </ContextMenuTrigger>
               <CanvasContextMenu store={store} hit={menuHit} insert={insert} askAI={askAI} annotateAskAI={annotateAskAI} zoomApi={zoomApi} />
@@ -287,7 +297,8 @@ export const App: FC = () => {
             )}
           </div>
 
-          {/* 右：属性面板（浮卡） */}
+          {/* 右：图层树（可折叠）+ 属性面板（浮卡） */}
+          {layersOpen && <LayersPanel store={store} zoomApi={zoomApi} onClose={() => setLayersOpen(false)} />}
           <Inspector store={store} selectedEl={selectedEl} askAI={askAI} />
 
           {/* 画布浮层 chrome：顶部项目头（mark+标题+最近下拉，透明融入画布无悬浮阴影），
@@ -306,6 +317,17 @@ export const App: FC = () => {
               <div className="pointer-events-auto flex shrink-0 items-center gap-2">
                 {exportBtn}
                 {/* <Separator orientation="vertical" className="mx-0.5 !h-5" /> */}
+                <Hint label="图层树：全部元素大纲，双击定位" side="bottom">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className={layersOpen ? "sc-tool bg-secondary/80" : "sc-tool"}
+                    onClick={() => setLayersOpen((v) => !v)}
+                    aria-label="图层树"
+                  >
+                    <LayersIcon className="size-4" />
+                  </Button>
+                </Hint>
                 {askAIBtn}
               </div>
             </div>
@@ -322,6 +344,7 @@ export const App: FC = () => {
                     <HelpCircleIcon className="size-3.5" />
                   </Button>
                 </Hint>
+                <ViewSettings flags={viewFlags} onToggle={setViewFlag} />
               </div>
               {selected && !editingId && selectedEl && (
                 <QuickEditComposer
@@ -386,19 +409,20 @@ export const App: FC = () => {
 
       {/* 冲突对话框（agent 外部改写 × 本地未保存编辑） */}
       <Dialog open={!!store.conflict} onOpenChange={(o) => !o && store.resolveConflict("keep")}>
-        <DialogContent className="max-w-[400px]">
+        <DialogContent className="max-w-[420px]">
           <DialogHeader>
-            <DialogTitle>文档在外部被修改</DialogTitle>
+            <DialogTitle>画布在外部被修改</DialogTitle>
             <DialogDescription>
-              工作区里的 {store.fileRel ?? "文档"} 被（agent 或别的窗口）改动了，而你有尚未保存的编辑。
-              载入外部版本会丢掉本地改动；保留本地会稍后覆盖写回。
+              {store.fileRel ?? "当前画布"} 被 agent 或别的窗口改写了，而你有尚未保存的编辑，需要二选一：
+              <br />• <b>看 agent 改了什么</b>——载入外部版本，你未保存的编辑会丢（agent 的新内容会自动出现在视口里）；
+              <br />• <b>接着画自己的</b>——保留本地并稍后整体写回，会覆盖 agent 的改动。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="secondary" onClick={() => store.resolveConflict("keep")}>
-              保留本地
+              保留本地继续画
             </Button>
-            <Button onClick={() => store.resolveConflict("reload")}>载入外部版本</Button>
+            <Button onClick={() => store.resolveConflict("reload")}>载入 agent 版本</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
