@@ -74,14 +74,14 @@ export function saveToWorkspace(workspace: string, rel: string, data: string | B
   return clean.split("/").filter(Boolean).join("/");
 }
 
-export function exportBundle(
+export async function exportBundle(
   workspace: string,
   docAbs: string,
   doc: DesignDoc,
   page: Page,
   ids: string[],
   opts: BundleOptions & { dirBase?: string } = {},
-): ExportSummary {
+): Promise<ExportSummary> {
   const nodes = ids
     .map((id) => findNode(doc, id)?.node)
     .filter((n): n is DesignNode => !!n && n.visible !== false);
@@ -108,7 +108,7 @@ export function exportBundle(
   if (plan.formats.has("png") || plan.formats.has("svg")) {
     for (const s of plan.screens) {
       if (plan.formats.has("png")) {
-        const png = renderDocPng(workspace, doc, [s.id], {
+        const png = await renderDocPng(workspace, doc, [s.id], {
           scale: plan.scale,
           maxDim: plan.maxDim,
           background: plan.background,

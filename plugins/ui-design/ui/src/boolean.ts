@@ -9,10 +9,22 @@
  *  - 减法语义 = 数组第一个节点（最底层）减去其余
  *  - 结果是「烤平」的矢量路径（vector 节点），不是实时布尔组（Figma 的 live boolean 后续再说）
  */
-import { union as clipUnion, difference as clipDiff, intersection as clipIntersect, xor as clipXor } from "polygon-clipping";
+import * as clipModule from "polygon-clipping";
 import { shapePath } from "./leafer/scene";
 import { radiusProp, } from "./leafer/scene";
 import type { DesignNode } from "./doc";
+
+// polygon-clipping 的 ESM 产物只 default 导出（d.ts 却声明命名导出）：具名导入在
+// bun 运行时靠 CJS 互操作侥幸可用，bun build 的静态分析会拒绝（MCP server 依赖
+// bundle 自包含）。统一按「有命名导出就用、没有就取 default」解析，三边（bun 运行
+// 时 / bun build / vite-rollup）行为一致。
+type ClipApi = typeof import("polygon-clipping");
+const clip = (
+  "union" in clipModule
+    ? clipModule
+    : (clipModule as unknown as { default: ClipApi }).default
+) as ClipApi;
+const { union: clipUnion, difference: clipDiff, intersection: clipIntersect, xor: clipXor } = clip;
 
 export const BOOL_OPS = ["union", "subtract", "intersect", "exclude"] as const;
 export type BooleanOp = (typeof BOOL_OPS)[number];

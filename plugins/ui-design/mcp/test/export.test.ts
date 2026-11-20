@@ -80,8 +80,8 @@ function runExport(opts: Parameters<typeof exportBundle>[5] = {}) {
 }
 
 describe("exportBundle（工程包真落盘）", () => {
-  test("默认格式 png/html/source：目录树完整、内容达标", () => {
-    const sum = runExport();
+  test("默认格式 png/html/source：目录树完整、内容达标", async () => {
+    const sum = await runExport();
     expect(sum.dir).toBe("落盘包-export");
     expect(sum.doc).toBe("落盘包.uidesign.json");
     expect(sum.screens).toEqual(["首页", "详情"]);
@@ -138,8 +138,8 @@ describe("exportBundle（工程包真落盘）", () => {
     );
   });
 
-  test("formats 仅 source：只有源档 + manifest；自定义 dir 生效", () => {
-    const sum = runExport({ formats: ["source"], dir: "dist/min" });
+  test("formats 仅 source：只有源档 + manifest；自定义 dir 生效", async () => {
+    const sum = await runExport({ formats: ["source"], dir: "dist/min" });
     expect(sum.dir).toBe("dist/min");
     // formats 只挡 png/svg/html：源档副本与可整体拷走的 assets/ 恒在
     expect(sum.files.map((f) => f.kind).sort()).toEqual(["asset", "manifest", "source"]);
@@ -148,8 +148,8 @@ describe("exportBundle（工程包真落盘）", () => {
     expect(existsSync(path.join(ws, "dist/min/screens"))).toBe(false);
   });
 
-  test("formats 含 svg：逐画板出自包含矢量", () => {
-    const sum = runExport({ formats: ["svg", "source"], dir: "dist/v" });
+  test("formats 含 svg：逐画板出自包含矢量", async () => {
+    const sum = await runExport({ formats: ["svg", "source"], dir: "dist/v" });
     expect(sum.files.map((f) => f.kind)).toContain("svg");
     const svg = readFileSync(path.join(ws, "dist/v/screens/01-首页.svg"), "utf8");
     expect(svg.trimStart().startsWith("<svg")).toBe(true);
@@ -158,8 +158,8 @@ describe("exportBundle（工程包真落盘）", () => {
     expect(existsSync(path.join(ws, "dist/v/screens/01-首页.png"))).toBe(false);
   });
 
-  test("scale/maxDim/background 透传：倍率钳制到最长边", () => {
-    const sum = runExport({ formats: ["png"], dir: "dist/cap", scale: 4, maxDim: 300 });
+  test("scale/maxDim/background 透传：倍率钳制到最长边", async () => {
+    const sum = await runExport({ formats: ["png"], dir: "dist/cap", scale: 4, maxDim: 300 });
     const pngFile = sum.files.find((f) => f.kind === "png")!;
     const buf = readFileSync(path.join(ws, pngFile.path));
     const [w, h] = pngWH(buf);
@@ -168,15 +168,15 @@ describe("exportBundle（工程包真落盘）", () => {
     expect(h).toBe(180);
   });
 
-  test("dir 越出工作区 → 抛错拒绝", () => {
-    expect(() => runExport({ dir: "../evil" })).toThrow(/越出工作区/);
-    expect(() => runExport({ dir: "a/../../b" })).toThrow(/越出工作区/);
+  test("dir 越出工作区 → 抛错拒绝", async () => {
+    await expect(runExport({ dir: "../evil" })).rejects.toThrow(/越出工作区/);
+    await expect(runExport({ dir: "a/../../b" })).rejects.toThrow(/越出工作区/);
   });
 
-  test("无可见顶层节点 → 报错而非空包", () => {
+  test("无可见顶层节点 → 报错而非空包", async () => {
     const docAbs = path.join(ws, "落盘包.uidesign.json");
     const doc = parseDesignDoc(readFileSync(docAbs, "utf8")).doc;
-    expect(() => exportBundle(ws, docAbs, doc, doc.pages[0]!, ["ghost"])).toThrow(/没有可见/);
+    await expect(exportBundle(ws, docAbs, doc, doc.pages[0]!, ["ghost"])).rejects.toThrow(/没有可见/);
   });
 });
 

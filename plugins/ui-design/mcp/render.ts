@@ -17,40 +17,49 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 
-// wasm 只能初始化一次且必须先于任何 Resvg 构造；模块顶层的 await 保证同步 API
-// （rasterizePng）拿到即用。字节从依赖包本体读：mcp/ 往上一级即插件根，开发态
-// （仓库 node_modules）与物化态（插件根 node_modules，打包器 vendor）同布局。
-// 缺文件 = 包被裁了运行时依赖，直接报可读错误。
-try {
-  await initWasm(
-    readFileSync(
-      new URL("../node_modules/@resvg/resvg-wasm/index_bg.wasm", import.meta.url),
-    ),
-  );
-} catch (err) {
-  throw new Error(
-    "ui-design mcp: 初始化 resvg wasm 失败（node_modules/@resvg/resvg-wasm 不可达，插件包不完整？）",
-    { cause: err },
-  );
+// wasm 只能初始化一次且必须先于任何 Resvg 构造。**懒初始化**：wasm 字节随插件
+// 分发（mcp/vendor/，入库文件），不在模块加载期读——插件市场安装是原样拷贝、
+// 不跑 bun install（node_modules 不入库），启动期读依赖树会在干净安装的机器上
+// 把整个 server 打死（Windows 新克隆即中招）。首次光栅化才初始化；wasm 缺失
+// 只影响截图/PNG 导出，MCP 握手与节点编辑工具照常可用。
+let wasmReady: Promise<void> | null = null;
+function ensureResvg(): Promise<void> {
+  wasmReady ??= (async () => {
+    try {
+      await initWasm(readFileSync(new URL("./vendor/resvg-index_bg.wasm", import.meta.url)));
+    } catch (err) {
+      throw new Error(
+        "ui-design mcp: 初始化 resvg wasm 失败（mcp/vendor/resvg-index_bg.wasm 缺失或不可读——插件包不完整？）",
+        { cause: err },
+      );
+    }
+  })();
+  return wasmReady;
 }
 
-/** 内置渲染字体：wasm 只认 fontBuffers（系统字体发现未实现），一次性读入复用 */
-const FONT_BUFFERS = (() => {
-  try {
-    return [readFileSync(new URL("./fonts/NotoSansSC-Regular.otf", import.meta.url))];
-  } catch (err) {
-    throw new Error("ui-design mcp: 内置字体 mcp/fonts/NotoSansSC-Regular.otf 缺失（插件包不完整？）", {
-      cause: err,
-    });
+/** 内置渲染字体：wasm 只认 fontBuffers（系统字体发现未实现），首次光栅化读入复用 */
+let fontBuffers: Buffer[] | null = null;
+function ensureFonts(): Buffer[] {
+  if (!fontBuffers) {
+    try {
+      fontBuffers = [readFileSync(new URL("./fonts/NotoSansSC-Regular.otf", import.meta.url))];
+    } catch (err) {
+      throw new Error("ui-design mcp: 内置字体 mcp/fonts/NotoSansSC-Regular.otf 缺失（插件包不完整？）", {
+        cause: err,
+      });
+    }
   }
-})();
+  return fontBuffers;
+}
 
 /** resvg 字体档：家族名兜底接住 FONT_STACK 里的 system-ui/…/sans-serif 各写法 */
-const FONT_OPTIONS = {
-  fontBuffers: FONT_BUFFERS,
-  defaultFontFamily: "Noto Sans SC",
-  sansSerifFamily: "Noto Sans SC",
-} as const;
+function fontOptions() {
+  return {
+    fontBuffers: ensureFonts(),
+    defaultFontFamily: "Noto Sans SC",
+    sansSerifFamily: "Noto Sans SC",
+  } as const;
+}
 import { findNode, type DesignDoc, type DesignNode } from "../ui/src/doc";
 import { buildSvg, collectImageSrcs } from "../ui/src/svg";
 import type { MeasureFn } from "../ui/src/leafer/scene";
@@ -197,12 +206,13 @@ export type RenderedPng = {
  * SVG → PNG。给定倍率与最长边上限，超预算自动降倍率重渲（budgetBytes=null 时不降）。
  * 独立导出（文件）与截图（内联）共用；差别只在 budgetBytes。
  */
-export function rasterizePng(
+export async function rasterizePng(
   svg: string,
   boxW: number,
   boxH: number,
   opts: { scale?: number; maxDim?: number; budgetBytes?: number | null } = {},
-): { png: Uint8Array; width: number; height: number } {
+): Promise<{ png: Uint8Array; width: number; height: number }> {
+  await ensureResvg(); // 首次调用才初始化 wasm（见文件头注释）
   let ratio = opts.scale ?? 2;
   const maxDim = opts.maxDim ?? 1600;
   const budget = opts.budgetBytes === undefined ? PNG_BUDGET : opts.budgetBytes;
@@ -210,7 +220,7 @@ export function rasterizePng(
   const draw = (r: number) => {
     const resvg = new Resvg(svg, {
       fitTo: { mode: "width", value: Math.max(1, Math.round(boxW * r)) },
-      font: { ...FONT_OPTIONS },
+      font: fontOptions(),
     });
     const img = resvg.render();
     return { png: img.asPng(), width: img.width, height: img.height };
@@ -228,12 +238,12 @@ export function rasterizePng(
  * 与面板 nodesToSvg 同一套 SVG 构建（ui/src/svg.ts），仅资产来源/测量/光栅化换成
  * bun 侧等价物，所以截图观感 ≈ 面板所见（文字折行可能有轻微近似差）。
  */
-export function renderDocPng(
+export async function renderDocPng(
   workspace: string,
   doc: DesignDoc,
   ids: string[],
   opts: RenderPngOptions = {},
-): RenderedPng | null {
+): Promise<RenderedPng | null> {
   const nodes = ids
     .map((id) => findNode(doc, id)?.node)
     .filter((n): n is DesignNode => !!n && n.visible !== false);
@@ -246,7 +256,7 @@ export function renderDocPng(
   });
   if (!built) return null;
   const { svg, box } = built;
-  const r = rasterizePng(svg, box.w, box.h, { scale: opts.scale, maxDim: opts.maxDim, budgetBytes: opts.budgetBytes });
+  const r = await rasterizePng(svg, box.w, box.h, { scale: opts.scale, maxDim: opts.maxDim, budgetBytes: opts.budgetBytes });
   return { ...r, boxW: Math.round(box.w), boxH: Math.round(box.h), missingImages: imgs.missing };
 }
 

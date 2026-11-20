@@ -91,10 +91,10 @@ describe("makeApproxMeasure（近似文本测量）", () => {
 });
 
 describe("renderDocPng（档 → PNG 全链路）", () => {
-  test("渲染基础稿：合法 PNG，尺寸≈设计盒×倍率", () => {
+  test("渲染基础稿：合法 PNG，尺寸≈设计盒×倍率", async () => {
     const parsed = parseDesignDoc(JSON.stringify(BASE_DOC));
     expect(parsed.fatal).toBe(false);
-    const r = renderDocPng(ws, parsed.doc, ["f1"], { scale: 2, maxDim: 1600 });
+    const r = await renderDocPng(ws, parsed.doc, ["f1"], { scale: 2, maxDim: 1600 });
     expect(r).not.toBeNull();
     const got = r!;
     expect(isPng(got.png)).toBe(true);
@@ -109,13 +109,13 @@ describe("renderDocPng（档 → PNG 全链路）", () => {
     expect(got.png.byteLength).toBeLessThan(2 * 1024 * 1024);
   });
 
-  test("ids 全隐藏 → null；不可见节点被跳过", () => {
+  test("ids 全隐藏 → null；不可见节点被跳过", async () => {
     const doc = structuredClone(BASE_DOC) as unknown as DesignDoc;
     (doc.pages[0]!.nodes[0] as { visible?: boolean }).visible = false;
-    expect(renderDocPng(ws, doc, ["f1"])).toBeNull();
+    expect(await renderDocPng(ws, doc, ["f1"])).toBeNull();
   });
 
-  test("位图资产：工作区 png 读成 dataURL；缺失记 missingImages 且仍出图", () => {
+  test("位图资产：工作区 png 读成 dataURL；缺失记 missingImages 且仍出图", async () => {
     writeFileSync(
       path.join(ws, "pix.png"),
       Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"),
@@ -134,7 +134,7 @@ describe("renderDocPng（档 → PNG 全链路）", () => {
     });
     const parsed = parseDesignDoc(JSON.stringify(doc));
     expect(parsed.fatal).toBe(false);
-    const ok = renderDocPng(ws, parsed.doc, ["f1", "img1"]);
+    const ok = await renderDocPng(ws, parsed.doc, ["f1", "img1"]);
     expect(ok && ok.missingImages).toBe(0);
 
     const bad = structuredClone(doc);
@@ -143,12 +143,12 @@ describe("renderDocPng（档 → PNG 全链路）", () => {
         if (n.type === "image") n.src = "no-such-file.png";
       }),
     );
-    const r2 = renderDocPng(ws, bad as unknown as DesignDoc, ["f1", "img1"]);
+    const r2 = await renderDocPng(ws, bad as unknown as DesignDoc, ["f1", "img1"]);
     expect(r2 && r2.missingImages).toBe(1);
     expect(r2 && isPng(r2.png)).toBe(true);
   });
 
-  test("maxDim 约束最长边：4000×1000 盒在 maxDim 800 下宽 ≤800", () => {
+  test("maxDim 约束最长边：4000×1000 盒在 maxDim 800 下宽 ≤800", async () => {
     const doc = structuredClone(BASE_DOC) as Record<string, unknown>;
     const frame = (doc["pages"] as Array<{ nodes: Array<Record<string, unknown>> }>)[0]!.nodes[0]!;
     frame.x = 0;
@@ -160,7 +160,7 @@ describe("renderDocPng（档 → PNG 全链路）", () => {
     f.h = 1000;
     const p2 = parseDesignDoc(JSON.stringify(big));
     expect(p2.fatal).toBe(false);
-    const r = renderDocPng(ws, p2.doc, ["f1"], { maxDim: 800 });
+    const r = await renderDocPng(ws, p2.doc, ["f1"], { maxDim: 800 });
     expect(r).not.toBeNull();
     const { w, h } = pngSize(r!.png);
     expect(w).toBeLessThanOrEqual(801);
@@ -168,18 +168,18 @@ describe("renderDocPng（档 → PNG 全链路）", () => {
     void parsed;
   });
 
-  test("透明底与白底：体积/字节存在但不可比，只保证合法 PNG", () => {
+  test("透明底与白底：体积/字节存在但不可比，只保证合法 PNG", async () => {
     const parsed = parseDesignDoc(JSON.stringify(BASE_DOC));
-    const t = renderDocPng(ws, parsed.doc, ["f1"], { background: null });
-    const w = renderDocPng(ws, parsed.doc, ["f1"], { background: "#ffffff" });
+    const t = await renderDocPng(ws, parsed.doc, ["f1"], { background: null });
+    const w = await renderDocPng(ws, parsed.doc, ["f1"], { background: "#ffffff" });
     expect(t && isPng(t.png)).toBe(true);
     expect(w && isPng(w.png)).toBe(true);
   });
 
-  test("非法档不崩：空页/未知 id 一律 null", () => {
+  test("非法档不崩：空页/未知 id 一律 null", async () => {
     const parsed = parseDesignDoc(JSON.stringify(BASE_DOC));
-    expect(renderDocPng(ws, parsed.doc, ["nope"])).toBeNull();
-    expect(renderDocPng(ws, parsed.doc, [])).toBeNull();
+    expect(await renderDocPng(ws, parsed.doc, ["nope"])).toBeNull();
+    expect(await renderDocPng(ws, parsed.doc, [])).toBeNull();
   });
 });
 

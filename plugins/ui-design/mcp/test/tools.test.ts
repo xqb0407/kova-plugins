@@ -337,7 +337,7 @@ function findById(doc: DesignDoc, id: string) {
 }
 
 describe("screenshot_doc（画布内容 → PNG 图像块）", () => {
-  test("默认截当前页全部可见顶层：mcpContent = 文本报导 + 合法 PNG", () => {
+  test("默认截当前页全部可见顶层：mcpContent = 文本报导 + 合法 PNG", async () => {
     run("create_doc", { path: "shot.uidesign.json", name: "截图档", frames: [{ name: "屏", w: 300, h: 400 }] });
     const doc = load("shot.uidesign.json");
     const frameId = page0(doc).nodes[0]!.id;
@@ -349,7 +349,7 @@ describe("screenshot_doc（画布内容 → PNG 图像块）", () => {
         { type: "text", x: 20, y: 120, w: 260, h: 40, text: "视觉自检", size: 24 },
       ],
     });
-    const res = run("screenshot_doc", { path: "shot.uidesign.json" });
+    const res = await run("screenshot_doc", { path: "shot.uidesign.json" });
     expect(Array.isArray(res.mcpContent)).toBe(true);
     const [textBlock, imgBlock] = res.mcpContent;
     expect(textBlock.type).toBe("text");
@@ -364,7 +364,7 @@ describe("screenshot_doc（画布内容 → PNG 图像块）", () => {
     expect(png.byteLength).toBeGreaterThan(500);
   });
 
-  test("ids 只截指定节点；隐藏节点跳过、全隐藏报错", () => {
+  test("ids 只截指定节点；隐藏节点跳过、全隐藏报错", async () => {
     run("create_doc", {
       path: "shot2.uidesign.json",
       frames: [
@@ -374,16 +374,16 @@ describe("screenshot_doc（画布内容 → PNG 图像块）", () => {
     });
     const doc = load("shot2.uidesign.json");
     const [a, b] = page0(doc).nodes;
-    const one = run("screenshot_doc", { path: "shot2.uidesign.json", ids: [a.id] });
+    const one = await run("screenshot_doc", { path: "shot2.uidesign.json", ids: [a.id] });
     expect(one.mcpContent[0].text).toContain("1 个顶层节点");
     run("update_nodes", { path: "shot2.uidesign.json", updates: [{ id: a.id, visible: false }] });
-    const other = run("screenshot_doc", { path: "shot2.uidesign.json" });
+    const other = await run("screenshot_doc", { path: "shot2.uidesign.json" });
     expect(other.mcpContent[0].text).toContain("1 个顶层节点"); // 默认只统计可见
     run("update_nodes", { path: "shot2.uidesign.json", updates: [{ id: b.id, visible: false }] });
-    expect(() => run("screenshot_doc", { path: "shot2.uidesign.json" })).toThrow(/没有可见/);
+    await expect(run("screenshot_doc", { path: "shot2.uidesign.json" })).rejects.toThrow(/没有可见/);
   });
 
-  test("image 资产：工作区文件内嵌；读不到时文本报导占位数", () => {
+  test("image 资产：工作区文件内嵌；读不到时文本报导占位数", async () => {
     writeFileSync(
       path.join(ws, "s.png"),
       Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"),
@@ -397,31 +397,31 @@ describe("screenshot_doc（画布内容 → PNG 图像块）", () => {
       nodes: [{ type: "image", x: 10, y: 10, w: 100, h: 100, src: "s.png" }],
     });
     const imgId = addRes.created[0].id as string;
-    const ok = run("screenshot_doc", { path: "shot3.uidesign.json" });
+    const ok = await run("screenshot_doc", { path: "shot3.uidesign.json" });
     expect(ok.mcpContent[0].text).not.toContain("占位");
     run("update_nodes", { path: "shot3.uidesign.json", updates: [{ id: imgId, src: "gone.png" }] });
-    const miss = run("screenshot_doc", { path: "shot3.uidesign.json" });
+    const miss = await run("screenshot_doc", { path: "shot3.uidesign.json" });
     expect(miss.mcpContent[0].text).toContain("1 张位图资产读不到");
   });
 
-  test("path 后缀/缺档错误与其它工具一致", () => {
-    expect(() => run("screenshot_doc", { path: "nope.json" })).toThrow(/uidesign\.json/);
-    expect(() => run("screenshot_doc", { path: "nope.uidesign.json" })).toThrow(/不存在/);
+  test("path 后缀/缺档错误与其它工具一致", async () => {
+    await expect(run("screenshot_doc", { path: "nope.json" })).rejects.toThrow(/uidesign\.json/);
+    await expect(run("screenshot_doc", { path: "nope.uidesign.json" })).rejects.toThrow(/不存在/);
   });
 });
 
 describe("export_doc / screenshot saveTo（导出 = 静态文件包）", () => {
-  test("screenshot_doc saveTo：内联图像块之外顺带落盘一份 PNG", () => {
+  test("screenshot_doc saveTo：内联图像块之外顺带落盘一份 PNG", async () => {
     run("create_doc", { path: "st.uidesign.json", frames: [{ name: "屏", w: 120, h: 80 }] });
-    const res = run("screenshot_doc", { path: "st.uidesign.json", saveTo: "shots/preview.png" });
+    const res = await run("screenshot_doc", { path: "st.uidesign.json", saveTo: "shots/preview.png" });
     expect(res.mcpContent[0].text).toContain("已保存到 shots/preview.png");
     const buf = readFileSync(path.join(ws, "shots/preview.png"));
     expect([...buf.subarray(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
     // 越出工作区的 saveTo 拒绝
-    expect(() => run("screenshot_doc", { path: "st.uidesign.json", saveTo: "../out.png" })).toThrow(/越出工作区/);
+    await expect(run("screenshot_doc", { path: "st.uidesign.json", saveTo: "../out.png" })).rejects.toThrow(/越出工作区/);
   });
 
-  test("export_doc 默认导出 png/html/source 目录包并回报路径清单", () => {
+  test("export_doc 默认导出 png/html/source 目录包并回报路径清单", async () => {
     mkdirSync(path.join(ws, "e-assets"), { recursive: true });
     writeFileSync(path.join(ws, "e-assets", "hero.png"), Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"));
     run("create_doc", {
@@ -436,7 +436,7 @@ describe("export_doc / screenshot saveTo（导出 = 静态文件包）", () => {
     const fa = page0(doc).nodes[0]!;
     run("add_nodes", { path: "e.uidesign.json", parent: fa.id, nodes: [{ type: "image", x: 8, y: 8, w: 40, h: 40, src: "e-assets/hero.png" }] });
 
-    const res = run("export_doc", { path: "e.uidesign.json" });
+    const res = await run("export_doc", { path: "e.uidesign.json" });
     expect(res.dir).toBe("e-export");
     expect(res.manifest).toBe("e-export/manifest.json");
     expect(res.screens).toEqual(["A", "B"]);
@@ -454,16 +454,16 @@ describe("export_doc / screenshot saveTo（导出 = 静态文件包）", () => {
     expect(parseDesignDoc(readFileSync(path.join(ws, "e-export/e.uidesign.json"), "utf8")).fatal).toBe(false);
   });
 
-  test("export_doc format/dir 选项与错误路径", () => {
+  test("export_doc format/dir 选项与错误路径", async () => {
     run("create_doc", { path: "e2.uidesign.json", frames: [{ name: "仅源", w: 100, h: 100 }] });
-    const srcOnly = run("export_doc", { path: "e2.uidesign.json", format: "source", dir: "dist/just" });
+    const srcOnly = await run("export_doc", { path: "e2.uidesign.json", format: "source", dir: "dist/just" });
     expect(srcOnly.files.map((f: { kind: string }) => f.kind).sort()).toEqual(["manifest", "source"]);
-    expect(() => run("export_doc", { path: "e2.uidesign.json", dir: "../evil" })).toThrow(/越出工作区/);
+    await expect(run("export_doc", { path: "e2.uidesign.json", dir: "../evil" })).rejects.toThrow(/越出工作区/);
 
     run("create_doc", { path: "e3.uidesign.json", frames: [{ name: "屏", w: 100, h: 100 }] });
     const doc = load("e3.uidesign.json");
     run("update_nodes", { path: "e3.uidesign.json", updates: [{ id: page0(doc).nodes[0]!.id, visible: false }] });
-    expect(() => run("export_doc", { path: "e3.uidesign.json" })).toThrow(/没有可见/);
+    await expect(run("export_doc", { path: "e3.uidesign.json" })).rejects.toThrow(/没有可见/);
   });
 });
 
@@ -501,7 +501,7 @@ describe("list_icons 与 icon 节点", () => {
     expect(kids2[1]!.type === "icon" && kids2[1].color).toBe("#ff0000");
   });
 
-  test("截图文本上报未知图标名（裸写 JSON 的坏图标名不会被 add_nodes 拦下）", () => {
+  test("截图文本上报未知图标名（裸写 JSON 的坏图标名不会被 add_nodes 拦下）", async () => {
     // 直接落盘一份带坏图标名的档（模拟 agent 裸写 JSON）：add_nodes 会拦，但裸写拦不住
     writeFileSync(
       path.join(ws, "badicon.uidesign.json"),
@@ -529,7 +529,7 @@ describe("list_icons 与 icon 节点", () => {
         ],
       }),
     );
-    const res = run("screenshot_doc", { path: "badicon.uidesign.json" });
+    const res = await run("screenshot_doc", { path: "badicon.uidesign.json" });
     expect(res.mcpContent[0].text).toContain("图标名无效");
   });
 });
@@ -619,8 +619,8 @@ describe("blendMode / flip / wrap / hug / code 导出", () => {
     expect(frame.h).toBe(100); // hug 交叉轴 = 行高总和 60+10+30
   });
 
-  test("export_doc format code：每画板一份 CSS 标注文件", () => {
-    const r = run("export_doc", { path: "wh.uidesign.json", dir: "dist/code", format: ["code"] });
+  test("export_doc format code：每画板一份 CSS 标注文件", async () => {
+    const r = await run("export_doc", { path: "wh.uidesign.json", dir: "dist/code", format: ["code"] });
     const codeFile = r.files.find((f: { kind: string }) => f.kind === "code");
     expect(codeFile).toBeTruthy();
     const css = readFileSync(path.join(ws, codeFile.path), "utf8");

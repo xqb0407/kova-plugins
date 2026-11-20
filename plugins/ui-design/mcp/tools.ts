@@ -1693,14 +1693,14 @@ function parseFormats(raw: unknown): ExportFormat[] | undefined {
  * 返回 { mcpContent } 包装，server.ts 原样透进 result.content（image 块经宿主
  * 2MiB/白名单闸门后作为模型可见图片上屏）。给了 saveTo 则顺带落盘一份 PNG 并回报路径。
  */
-function opScreenshotDoc(args: Spec, ctx: ToolCtx): unknown {
+async function opScreenshotDoc(args: Spec, ctx: ToolCtx): Promise<unknown> {
   const abs = resolveDocPath(args.path, ctx);
   const { doc } = loadDoc(abs);
   const page = pickPage(doc, args.page);
   const ids = targetTopLevelIds(page, args.ids);
   const maxDim = Math.min(Math.max(num(args.maxDim) ?? 1600, 320), 4096);
   const scale = Math.min(Math.max(num(args.scale) ?? 2, 0.5), 4);
-  const r = renderDocPng(ctx.workspace, doc, ids, {
+  const r = await renderDocPng(ctx.workspace, doc, ids, {
     maxDim,
     scale,
     background: bgOf(args.background, "#ffffff"),
@@ -1730,14 +1730,14 @@ function opScreenshotDoc(args: Spec, ctx: ToolCtx): unknown {
  * index.html 原型 + manifest.json），返回全部静态文件的工作区相对路径清单。
  * 与面板「导出工程包」共用 ui/src/bundle.ts 装配器，产物结构一致。
  */
-function opExportDoc(args: Spec, ctx: ToolCtx): unknown {
+async function opExportDoc(args: Spec, ctx: ToolCtx): Promise<unknown> {
   const abs = resolveDocPath(args.path, ctx);
   const { doc } = loadDoc(abs);
   const page = pickPage(doc, args.page);
   const ids = targetTopLevelIds(page, args.ids);
   const maxDim = Math.min(Math.max(num(args.maxDim) ?? 4096, 320), 16384);
   const scale = Math.min(Math.max(num(args.scale) ?? 2, 0.5), 8);
-  const summary = exportBundle(ctx.workspace, abs, doc, page, ids, {
+  const summary = await exportBundle(ctx.workspace, abs, doc, page, ids, {
     dir: str(args.dir)?.trim() || undefined,
     formats: parseFormats(args.format),
     maxDim,

@@ -71,6 +71,16 @@ cd plugins/canvas && bun install && bun run build   # office、ui-design 同理
 构建把 `ui/dist/index.html` 拷为插件根的 `<name>.html`（postbuild 自动），
 提交产物即可。`node_modules/` 与 `ui/dist/` 不入库。
 
+**ui-design 的 MCP server 也有构建产物**（`plugins/ui-design/mcp/server.bundle.js`）：
+它的 MCP 运行时依赖两个第三方包（`@resvg/resvg-wasm` / `polygon-clipping`），而
+插件市场安装是原样拷贝、不跑 `bun install`——所以 bundle 把依赖内联进单文件入库，
+wasm 单独入库在 `mcp/vendor/`（安装副本因此不需要 node_modules）。改了
+`plugins/ui-design/mcp/*.ts` 或 `ui/src/boolean.ts` 后要重打：
+
+```bash
+cd plugins/ui-design && bun run build:mcp   # 产物 mcp/server.bundle.js 入库
+```
+
 ## 快速开始
 
 ### 本地开发（推荐）：目录市场 + 链接安装
